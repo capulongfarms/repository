@@ -397,6 +397,23 @@ main{flex:1;overflow:hidden;}
         </div>
       </div>
       <div class="settings-section">
+        <h3>🔄 Migrate Encryption Key</h3>
+        <div style="font-size:.78rem;color:var(--text2);line-height:1.8;margin-bottom:12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:10px 14px;">
+          <div style="color:var(--warn);font-weight:600;margin-bottom:6px;">⚠️ Changing your admin password changes the encryption key — run this migration or existing passwords will be unreadable.</div>
+          <div style="color:var(--text2);font-weight:600;margin-bottom:3px;">Using the Migration Tool (recommended):</div>
+          <div>① <b>Export</b> — save a local Excel backup as safety net</div>
+          <div>② <b>Migrate Encryption Key</b> — re-encrypts all records + changes password in one step</div>
+          <div style="margin-top:8px;color:var(--text2);font-weight:600;margin-bottom:3px;">Manual approach (without migration tool):</div>
+          <div>① <b>Export</b> — save local Excel backup</div>
+          <div>② <b>Clear All</b> — wipe Firebase</div>
+          <div>③ <b>Change Admin Password</b> — update password hash</div>
+          <div>④ <b>Re-import</b> — data comes back encrypted with new key</div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openModal('migrate-modal')">🔄 Migrate Encryption Key</button>
+        </div>
+      </div>
+      <div class="settings-section">
         <h3>🌐 Portal Database</h3>
         <div class="btn-group">
           <button class="btn btn-ghost" onclick="pinProtect(backupPortal)">⬇ Backup</button>
@@ -414,23 +431,6 @@ main{flex:1;overflow:hidden;}
           <button class="btn btn-ghost" onclick="pinProtect(exportRepo)">📤 Export Excel</button>
           <button class="btn btn-ghost" onclick="pinProtect(importRepo)">📥 Import Excel</button>
           <button class="btn btn-danger" onclick="pinProtect(clearRepo)">🗑 Clear All</button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <h3>🔄 Migrate Encryption Key</h3>
-        <div style="font-size:.78rem;color:var(--text2);line-height:1.8;margin-bottom:12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:10px 14px;">
-          <div style="color:var(--warn);font-weight:600;margin-bottom:6px;">⚠️ Changing your admin password changes the encryption key — run this migration or existing passwords will be unreadable.</div>
-          <div style="color:var(--text2);font-weight:600;margin-bottom:3px;">Using the Migration Tool (recommended):</div>
-          <div>① <b>Export</b> — save a local Excel backup as safety net</div>
-          <div>② <b>Migrate Encryption Key</b> — re-encrypts all records + changes password in one step</div>
-          <div style="margin-top:8px;color:var(--text2);font-weight:600;margin-bottom:3px;">Manual approach (without migration tool):</div>
-          <div>① <b>Export</b> — save local Excel backup</div>
-          <div>② <b>Clear All</b> — wipe Firebase</div>
-          <div>③ <b>Change Admin Password</b> — update password hash</div>
-          <div>④ <b>Re-import</b> — data comes back encrypted with new key</div>
-        </div>
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="openModal('migrate-modal')">🔄 Migrate Encryption Key</button>
         </div>
       </div>
       <div class="settings-section">
