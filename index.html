@@ -417,6 +417,23 @@ main{flex:1;overflow:hidden;}
         </div>
       </div>
       <div class="settings-section">
+        <h3>🔄 Migrate Encryption Key</h3>
+        <div style="font-size:.78rem;color:var(--text2);line-height:1.8;margin-bottom:12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:10px 14px;">
+          <div style="color:var(--warn);font-weight:600;margin-bottom:6px;">⚠️ Changing your admin password changes the encryption key — run this migration or existing passwords will be unreadable.</div>
+          <div style="color:var(--text2);font-weight:600;margin-bottom:3px;">Using the Migration Tool (recommended):</div>
+          <div>① <b>Export</b> — save a local Excel backup as safety net</div>
+          <div>② <b>Migrate Encryption Key</b> — re-encrypts all records + changes password in one step</div>
+          <div style="margin-top:8px;color:var(--text2);font-weight:600;margin-bottom:3px;">Manual approach (without migration tool):</div>
+          <div>① <b>Export</b> — save local Excel backup</div>
+          <div>② <b>Clear All</b> — wipe Firebase</div>
+          <div>③ <b>Change Admin Password</b> — update password hash</div>
+          <div>④ <b>Re-import</b> — data comes back encrypted with new key</div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openModal('migrate-modal')">🔄 Migrate Encryption Key</button>
+        </div>
+      </div>
+      <div class="settings-section">
         <h3>⚙️ App Settings</h3>
         <div class="btn-group">
           <button class="btn btn-ghost" onclick="requireAdmin(backupSettings)">⬇ Backup Settings</button>
@@ -506,6 +523,30 @@ main{flex:1;overflow:hidden;}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('admin-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="verifyAdmin()">Verify</button>
+    </div>
+  </div>
+</div>
+
+<!-- MIGRATE MODAL -->
+<div class="modal-overlay" id="migrate-modal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <span class="modal-title">🔄 Migrate Encryption Key</span>
+      <button class="modal-close" onclick="closeModal('migrate-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.8rem;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+        This will re-encrypt all portal passwords with your new admin password and update the login credential in one step.
+      </p>
+      <div class="settings-grid" style="gap:10px;">
+        <div class="settings-field" style="grid-column:1/-1"><label>Current Password</label><input type="password" id="mg-cur" placeholder="Enter current password"/></div>
+        <div class="settings-field"><label>New Password</label><input type="password" id="mg-new" placeholder="Min 6 characters"/></div>
+        <div class="settings-field"><label>Confirm New Password</label><input type="password" id="mg-conf" placeholder="Repeat new password"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('migrate-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="migrateEncryption()">🔄 Migrate & Change Password</button>
     </div>
   </div>
 </div>
@@ -1263,6 +1304,66 @@ async function changeAdminPassword() {
   document.getElementById('s-new').value = '';
   document.getElementById('s-conf').value = '';
   toast('Password updated', 'success');
+}
+
+// ═══════════════════════════════════════════════════
+//  ENCRYPTION MIGRATION
+// ═══════════════════════════════════════════════════
+async function migrateEncryption() {
+  const curPw  = document.getElementById('mg-cur').value;
+  const newPw  = document.getElementById('mg-new').value;
+  const confPw = document.getElementById('mg-conf').value;
+  if (!curPw || !newPw || !confPw) { toast('Fill all fields', 'warn'); return; }
+  if (newPw !== confPw) { toast('New passwords do not match', 'error'); return; }
+  if (newPw.length < 6) { toast('Minimum 6 characters', 'warn'); return; }
+
+  const curH = await sha256(curPw);
+  const stored = await getHash();
+  if (curH !== stored) { toast('Current password is incorrect', 'error'); return; }
+
+  showLoading(true, 'Migrating encryption…');
+  try {
+    const oldKey = await deriveKey(curPw);
+    const newKey = await deriveKey(newPw);
+
+    const snap = await window._db.collection(PORTAL_COL).get();
+    const chunks = [];
+    for (let i = 0; i < snap.docs.length; i += 500)
+      chunks.push(snap.docs.slice(i, i + 500));
+
+    for (const chunk of chunks) {
+      const batch = window._db.batch();
+      for (const doc of chunk) {
+        const raw = doc.data().password || '';
+        let plain = raw;
+        if (String(raw).startsWith('enc:')) {
+          try {
+            const [ivB64, ctB64] = String(raw).slice(4).split(':');
+            const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+            const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
+            plain = new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv}, oldKey, ct));
+          } catch(e) {}
+        }
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, newKey, new TextEncoder().encode(String(plain)));
+        const encPw = 'enc:' + btoa(String.fromCharCode(...iv)) + ':' + btoa(String.fromCharCode(...new Uint8Array(ct)));
+        batch.update(doc.ref, {password: encPw});
+      }
+      await batch.commit();
+    }
+
+    await saveHash(await sha256(newPw));
+    S.cryptoKey = newKey;
+    await loadPortal();
+    renderPortalTable();
+
+    document.getElementById('mg-cur').value = '';
+    document.getElementById('mg-new').value = '';
+    document.getElementById('mg-conf').value = '';
+    closeModal('migrate-modal');
+    toast('Migration complete — ' + snap.docs.length + ' records re-encrypted', 'success');
+  } catch(e) { toast('Migration error: ' + e.message, 'error'); }
+  showLoading(false);
 }
 
 // ═══════════════════════════════════════════════════
