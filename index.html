@@ -540,6 +540,7 @@ const S = {
   repoEditMode: false,
   adminCb: null,
   _hashCache: null,
+  cryptoKey: null,
 };
 
 // Obfuscated default: "aneza654457"
@@ -551,6 +552,42 @@ const DEFAULT_PW = atob('YW5lemE2NTQ0NTc=');
 async function sha256(msg) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  AES-GCM ENCRYPTION (client-side, key derived from admin password)
+// ═══════════════════════════════════════════════════
+async function deriveKey(password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt:enc.encode('repo-portal-v1'), iterations:100000, hash:'SHA-256' },
+    keyMaterial,
+    { name:'AES-GCM', length:256 },
+    false, ['encrypt','decrypt']
+  );
+}
+
+async function encryptField(val) {
+  if (!S.cryptoKey || !val) return val;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt(
+    {name:'AES-GCM', iv}, S.cryptoKey, new TextEncoder().encode(String(val))
+  );
+  return 'enc:' + btoa(String.fromCharCode(...iv)) + ':' + btoa(String.fromCharCode(...new Uint8Array(ct)));
+}
+
+async function decryptField(val) {
+  if (!S.cryptoKey || !val || !String(val).startsWith('enc:')) return val;
+  try {
+    const [ivB64, ctB64] = String(val).slice(4).split(':');
+    const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+    const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
+    const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv}, S.cryptoKey, ct);
+    return new TextDecoder().decode(plain);
+  } catch(e) { return val; }
 }
 
 // ═══════════════════════════════════════════════════
@@ -611,6 +648,7 @@ async function tryLogin() {
   if (h === stored) {
     S.failCount = 0;
     S.adminSession = true;
+    S.cryptoKey = await deriveKey(pw);
     document.getElementById('auth-pw').value = '';
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
@@ -635,6 +673,7 @@ function setAuthMsg(m, lock) {
 
 function signOut() {
   S.adminSession = false;
+  S.cryptoKey = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   setTimeout(()=>{ document.getElementById('auth-pw').focus(); }, 100);
@@ -705,7 +744,11 @@ async function loadAllData() {
 // ═══════════════════════════════════════════════════
 async function loadPortal() {
   const snap = await window._db.collection(PORTAL_COL).get();
-  S.portalRecords = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  S.portalRecords = await Promise.all(snap.docs.map(async d => {
+    const data = d.data();
+    data.password = await decryptField(data.password);
+    return {id: d.id, ...data};
+  }));
   localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
 }
 
@@ -735,13 +778,15 @@ async function savePortalRecord() {
   if (!data.portalDescription) { toast('Description is required', 'error'); return; }
   showLoading(true, 'Saving…');
   try {
+    const encData = {...data, password: await encryptField(data.password)};
     if (_pmEditId) {
-      await window._db.collection(PORTAL_COL).doc(_pmEditId).update(data);
+      await window._db.collection(PORTAL_COL).doc(_pmEditId).update(encData);
       const i = S.portalRecords.findIndex(r => r.id === _pmEditId);
       if (i > -1) Object.assign(S.portalRecords[i], data);
     } else {
-      data.createdAt = new Date().toISOString();
-      const ref = await window._db.collection(PORTAL_COL).add(data);
+      encData.createdAt = new Date().toISOString();
+      data.createdAt = encData.createdAt;
+      const ref = await window._db.collection(PORTAL_COL).add(encData);
       S.portalRecords.push({id: ref.id, ...data});
     }
     localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
@@ -1049,7 +1094,8 @@ async function handlePortalImport(inp) {
           createdAt: new Date().toISOString(),
         };
         if (!data.portalDescription) continue;
-        const ref = await window._db.collection(PORTAL_COL).add(data);
+        const encData = {...data, password: await encryptField(data.password)};
+        const ref = await window._db.collection(PORTAL_COL).add(encData);
         S.portalRecords.push({id: ref.id, ...data}); count++;
       }
       localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
@@ -1417,12 +1463,13 @@ async function seedPortal() {
     {portalDescription:'UAE Exchange',portalAddress:'https://qa.uaeexchange.com/',loginAccount:'polcapulong#',password:'Aneza654457#',remarks:'Reg: 0005763414420265'},
   ];
   const batch = window._db.batch();
-  SEED.forEach(r => {
+  for (const r of SEED) {
     r.createdAt = new Date().toISOString();
     const ref = window._db.collection(PORTAL_COL).doc();
-    batch.set(ref, r);
+    const encPassword = await encryptField(r.password);
+    batch.set(ref, {...r, password: encPassword});
     S.portalRecords.push({id: ref.id, ...r});
-  });
+  }
   await batch.commit();
   localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
   toast('Portal records seeded (' + SEED.length + ' records)', 'success');
