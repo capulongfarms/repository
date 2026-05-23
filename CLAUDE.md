@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A single-file web app (`index.html`, ~1600 lines) for managing portal credentials and software repository metadata. All logic, styles, and markup live in one file with no build step. Firebase Firestore is the primary datastore; localStorage is the offline fallback. Deployed on GitHub Pages at `https://capulongfarms.github.io/repository/`.
+A single-file web app (`index.html`, ~1450 lines) for managing portal credentials and software repository metadata. All logic, styles, and markup live in one file with no build step. Firebase Firestore is the primary datastore; localStorage is the offline fallback. Deployed on GitHub Pages at `https://capulongfarms.github.io/repository/`.
 
 ## Running the App
 
@@ -16,7 +16,7 @@ Open `index.html` directly in a browser — `file://` protocol works. No server 
 
 **Four Firestore collections:**
 - `portal_records` — credential entries (portalDescription, portalAddress, loginAccount, password, remarks). The `password` field is AES-GCM encrypted before every write.
-- `repo_records` — repository metadata (17 fields: local paths, VS Code workspace, GitHub, Firebase project ID, Cloudflare, Railway, PayMongo, etc.)
+- `repo_records` — repository metadata (17 fields: local paths, VS Code workspace, GitHub, Firebase project ID, Cloudflare, Railway, PayMongo, etc.). Each record also carries `createdAt` and `lastModified` timestamps (auto-set; not in `REPO_FIELDS`, excluded from export/import).
 - `backups` — snapshot documents for disaster recovery
 - `app_settings` — admin password hash (`passHash`) and app config
 
@@ -50,7 +50,8 @@ Open `index.html` directly in a browser — `file://` protocol works. No server 
 - Backup/restore snapshots the entire collection as a single Firestore document (`portal_backup`, `repo_backup`, `settings_backup` docs in the `backups` collection).
 - `clearBackups()` deletes all three snapshot docs; PIN-protected.
 - Batch deletes/updates are chunked at 500 docs to stay within Firestore limits.
-- `seedPortal()` and `seedRepo()` exist in the code for reference but are **not called automatically** — they were removed from `loadAllData()` to prevent re-populating the DB after a Clear All.
+- `lastModified` is stamped on every repo record save (`saveRepoEdit`) and create (`newRepoRecord`); displayed read-only at the bottom of the detail panel via `fmtDate()`. Not part of `REPO_FIELDS` so it is never exported or imported.
+- There are no seed functions — `seedPortal()` and `seedRepo()` have been fully deleted.
 
 ## Firebase Config
 

@@ -9,7 +9,7 @@ A single-file web app for managing portal credentials and software repository me
 ## Features
 
 - **Portal & Email Database** — store and manage credentials (site, login, password, remarks)
-- **Repository Database** — track 17 metadata fields per project (GitHub, Firebase, Cloudflare, Railway, etc.)
+- **Repository Database** — track 17 metadata fields per project (GitHub, Firebase, Cloudflare, Railway, etc.); each record shows a **Last Modified** timestamp updated automatically on every save
 - **AES-256-GCM encryption** — passwords are encrypted in the browser before reaching Firebase; plaintext never stored in the cloud
 - **Admin password gate** — SHA-256 hashed, 5-attempt lockout, session in memory only
 - **PIN re-prompt** — Backup, Restore, Export, Import, Clear All, and Clear Backups always ask for the password even within an active session
