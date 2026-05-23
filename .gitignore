@@ -1,0 +1,9 @@
+# Temp Office files
+Files/~$*
+Files/~WRL*.tmp
+
+# Local workspace file
+Repository.code-workspace
+
+# Claude Code local settings
+.claude/
