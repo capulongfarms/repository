@@ -16,7 +16,7 @@ A single-file web app for managing portal credentials and software repository me
 - **Excel import / export** — bulk data in and out via `.xlsx`
 - **Firebase backup / restore** — snapshot entire collections to Firestore; clear backup snapshots via Settings → App Settings
 - **Offline support** — localStorage fallback when Firebase is unreachable
-- **Encryption migration** — change admin password and re-encrypt all records in one step
+- **Encryption migration** — change admin password and re-encrypt all records in one step (grouped directly below Change Admin Password in Settings)
 
 ---
 

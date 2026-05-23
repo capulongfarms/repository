@@ -33,7 +33,7 @@ Open `index.html` directly in a browser — `file://` protocol works. No server 
 
 **Encryption migration:** `migrateEncryption()` re-encrypts all portal passwords when the admin password changes. Decrypts with the old key, re-encrypts with the new key, updates the password hash, and refreshes `S.cryptoKey` — all in one operation. Handles collections of any size via 500-doc batch chunks.
 
-**UI structure:** Tab-based navigation — Overview (dashboard stats), Portal DB, Repository DB, Settings. Repository DB uses a split-panel layout (list on left, detail/edit on right). Modals handle add/edit for Portal DB.
+**UI structure:** Tab-based navigation — Overview (dashboard stats), Portal DB, Repository DB, Settings. Repository DB uses a split-panel layout (list on left, detail/edit on right). Modals handle add/edit for Portal DB. Settings tab order: Change Admin Password → Migrate Encryption Key → Portal Database → Repository Database → App Settings → App Information.
 
 **Offline handling:** Firebase offline persistence is enabled. Falls back to localStorage cache when Firestore is unreachable. A status indicator shows connectivity state.
 
