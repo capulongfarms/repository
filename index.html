@@ -438,6 +438,7 @@ main{flex:1;overflow:hidden;}
         <div class="btn-group">
           <button class="btn btn-ghost" onclick="requireAdmin(backupSettings)">⬇ Backup Settings</button>
           <button class="btn btn-ghost" onclick="restoreSettings()">⬆ Restore Settings</button>
+          <button class="btn btn-danger" onclick="pinProtect(clearBackups)">🗑 Clear Backups</button>
         </div>
       </div>
       <div class="settings-section">
@@ -1255,6 +1256,25 @@ async function clearRepo() {
       localStorage.removeItem('repoCache');
       renderRepoList(); renderRepoPanel(); renderOverview();
       toast('Repository DB cleared (' + snap.docs.length + ' records deleted)', 'success');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+    showLoading(false);
+  });
+}
+
+async function clearBackups() {
+  confirmDo('Delete ALL backup snapshots from Firebase (portal, repo, settings)? This cannot be undone.', async () => {
+    showLoading(true, 'Clearing backups…');
+    try {
+      const docs = ['portal_backup', 'repo_backup', 'settings_backup'];
+      const batch = window._db.batch();
+      let deleted = 0;
+      for (const id of docs) {
+        const ref = window._db.collection(BACKUP_COL).doc(id);
+        const snap = await ref.get();
+        if (snap.exists) { batch.delete(ref); deleted++; }
+      }
+      await batch.commit();
+      toast('Backups cleared (' + deleted + ' snapshot' + (deleted !== 1 ? 's' : '') + ' deleted)', 'success');
     } catch(e) { toast('Error: ' + e.message, 'error'); }
     showLoading(false);
   });
