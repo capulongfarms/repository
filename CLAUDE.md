@@ -29,7 +29,7 @@ Open `index.html` directly in a browser — `file://` protocol works. No server 
 - `loadPortal()` decrypts all passwords after fetching from Firestore — in-memory records are always plaintext.
 - On sign-out, `S.cryptoKey` is cleared.
 
-**PIN protection:** `pinProtect(cb)` always re-prompts for the admin password regardless of session state. Used for Backup, Restore, Export, Import, and Clear All. `requireAdmin(cb)` only prompts when `S.adminSession` is false — used for inline record edits/deletes.
+**PIN protection:** `pinProtect(cb)` always re-prompts for the admin password regardless of session state. Used for Backup, Restore, Export, Import, Clear All, and Clear Backups. `requireAdmin(cb)` only prompts when `S.adminSession` is false — used for inline record edits/deletes.
 
 **Encryption migration:** `migrateEncryption()` re-encrypts all portal passwords when the admin password changes. Decrypts with the old key, re-encrypts with the new key, updates the password hash, and refreshes `S.cryptoKey` — all in one operation. Handles collections of any size via 500-doc batch chunks.
 
@@ -47,7 +47,8 @@ Open `index.html` directly in a browser — `file://` protocol works. No server 
 - UI interactions use direct `onclick` handlers and imperative DOM manipulation — no virtual DOM or reactive framework.
 - Toast notifications for feedback; all async operations are `async/await`.
 - Excel import maps column headers to field names; export serializes the active collection to `.xlsx`.
-- Backup/restore snapshots the entire collection as a single Firestore document.
+- Backup/restore snapshots the entire collection as a single Firestore document (`portal_backup`, `repo_backup`, `settings_backup` docs in the `backups` collection).
+- `clearBackups()` deletes all three snapshot docs; PIN-protected.
 - Batch deletes/updates are chunked at 500 docs to stay within Firestore limits.
 
 ## Firebase Config

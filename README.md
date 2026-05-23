@@ -14,7 +14,7 @@ A single-file web app for managing portal credentials and software repository me
 - **Admin password gate** — SHA-256 hashed, 5-attempt lockout, session in memory only
 - **PIN re-prompt** — Backup, Restore, Export, Import, and Clear All always ask for the password even within an active session
 - **Excel import / export** — bulk data in and out via `.xlsx`
-- **Firebase backup / restore** — snapshot entire collections to Firestore
+- **Firebase backup / restore** — snapshot entire collections to Firestore; clear backup snapshots via Settings → App Settings
 - **Offline support** — localStorage fallback when Firebase is unreachable
 - **Encryption migration** — change admin password and re-encrypt all records in one step
 
