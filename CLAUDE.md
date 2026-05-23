@@ -50,6 +50,7 @@ Open `index.html` directly in a browser — `file://` protocol works. No server 
 - Backup/restore snapshots the entire collection as a single Firestore document (`portal_backup`, `repo_backup`, `settings_backup` docs in the `backups` collection).
 - `clearBackups()` deletes all three snapshot docs; PIN-protected.
 - Batch deletes/updates are chunked at 500 docs to stay within Firestore limits.
+- `seedPortal()` and `seedRepo()` exist in the code for reference but are **not called automatically** — they were removed from `loadAllData()` to prevent re-populating the DB after a Clear All.
 
 ## Firebase Config
 
