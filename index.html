@@ -765,9 +765,6 @@ async function loadAllData() {
   try {
     await Promise.all([loadPortal(), loadRepo()]);
     setSyncStatus('ok');
-    // Seed if empty
-    if (S.portalRecords.length === 0) await seedPortal();
-    if (S.repoRecords.length === 0)   await seedRepo();
   } catch(e) {
     console.warn('Firebase load error:', e);
     setSyncStatus('error');
