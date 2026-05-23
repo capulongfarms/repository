@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Repository Portal — Capulong</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Firebase SDK (compat version — no module import needed, works with file:// and GitHub Pages) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const cfg = {
+    apiKey:"AIzaSyASz6IlNViUkRvDx6OHNZA7HSHeq8cp2Pk",
+    authDomain:"repository-15ce3.firebaseapp.com",
+    projectId:"repository-15ce3",
+    storageBucket:"repository-15ce3.firebasestorage.app",
+    messagingSenderId:"329610251539",
+    appId:"1:329610251539:web:6200eed3940b07f0e5dee6"
+  };
+  try {
+    firebase.initializeApp(cfg);
+    window._db = firebase.firestore();
+    // Enable offline persistence (compat API)
+    window._db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    window._firebaseReady = true;
+  } catch(e) {
+    console.warn('Firebase init error:', e);
+    window._firebaseReady = false;
+  }
+})();
+</script>
+<style>
+html{font-size:18px;}
+:root{
+  --bg:#0f1117;--bg2:#161b26;--bg3:#1e2535;--bg4:#252d3d;
+  --border:#2a3348;--border2:#3a4560;
+  --text:#e8edf5;--text2:#9aa5b8;--text3:#5a6580;
+  --accent:#3b82f6;--accent2:#10b981;--danger:#ef4444;
+  --warn:#f59e0b;--purple:#8b5cf6;
+  --card:#1a2035;--card2:#212940;
+  --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --radius:10px;--radius2:6px;--shadow:0 4px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:1rem;min-height:100vh;overflow-x:hidden;}
+
+/* AUTH */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:radial-gradient(ellipse at 30% 20%,rgba(59,130,246,.18) 0%,transparent 60%),
+  radial-gradient(ellipse at 70% 80%,rgba(16,185,129,.12) 0%,transparent 60%),var(--bg);}
+.auth-card{background:var(--card);border:1px solid var(--border2);border-radius:16px;
+  padding:44px 40px;text-align:center;max-width:380px;width:92%;box-shadow:var(--shadow);}
+.auth-card h1{font-size:1.5rem;font-weight:700;margin-bottom:6px;}
+.auth-card p{color:var(--text2);margin-bottom:24px;font-size:.88rem;line-height:1.6;}
+.auth-icon{font-size:2.8rem;margin-bottom:14px;}
+.auth-input-wrap{position:relative;margin-bottom:14px;}
+.auth-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;
+  color:var(--text);font-family:var(--font);font-size:1rem;padding:13px 44px 13px 16px;
+  outline:none;transition:border .2s;}
+.auth-input:focus{border-color:var(--accent);}
+.auth-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--text2);cursor:pointer;font-size:1rem;padding:4px;}
+.auth-submit{width:100%;background:var(--accent);border:none;border-radius:10px;
+  color:#fff;font-family:var(--font);font-size:.95rem;font-weight:600;padding:13px;
+  cursor:pointer;transition:all .2s;margin-bottom:4px;}
+.auth-submit:hover{background:#2563eb;}
+.auth-msg{margin-top:8px;font-size:.8rem;color:var(--danger);min-height:18px;}
+.lock-msg{color:var(--warn)!important;}
+
+/* LAYOUT */
+#app{display:none;flex-direction:column;min-height:100vh;}
+header{background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;height:50px;gap:4px;position:sticky;top:0;z-index:200;}
+.font-ctrl{display:flex;align-items:center;gap:3px;margin-right:6px;flex-shrink:0;}
+.font-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);
+  width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:.72rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.font-btn:hover{background:var(--bg4);color:var(--text);}
+.font-size-lbl{font-size:.68rem;color:var(--text3);min-width:26px;text-align:center;font-family:var(--mono);}
+.app-title{font-weight:700;font-size:.88rem;color:var(--accent);white-space:nowrap;margin-right:8px;}
+.nav-tabs{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none;}
+.nav-tabs::-webkit-scrollbar{display:none;}
+.nav-btn{background:none;border:none;color:var(--text2);padding:6px 10px;border-radius:var(--radius2);
+  cursor:pointer;font-size:.78rem;font-weight:500;white-space:nowrap;transition:all .15s;font-family:var(--font);}
+.nav-btn:hover{background:var(--bg3);color:var(--text);}
+.nav-btn.active{background:var(--accent);color:#fff;}
+.header-right{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);}
+.sync-dot.offline{background:var(--warn);}
+.sync-dot.error{background:var(--danger);}
+.signout-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:3px 9px;
+  border-radius:var(--radius2);cursor:pointer;font-size:.73rem;font-family:var(--font);transition:all .15s;}
+.signout-btn:hover{border-color:var(--danger);color:var(--danger);}
+
+/* MAIN */
+main{flex:1;overflow:hidden;}
+.dashboard{display:none;height:calc(100vh - 50px);overflow-y:auto;padding:16px 18px;}
+.dashboard.active{display:block;}
+.dashboard::-webkit-scrollbar{width:5px;}
+.dashboard::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* COMPONENTS */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
+.page-title{font-size:1.1rem;font-weight:700;}
+.toolbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:var(--radius2);
+  border:none;cursor:pointer;font-size:.78rem;font-weight:600;font-family:var(--font);
+  transition:all .15s;white-space:nowrap;}
+.btn:hover{opacity:.86;transform:translateY(-1px);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-success{background:var(--accent2);color:#fff;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-warn{background:var(--warn);color:#000;}
+.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);}
+.btn-sm{padding:4px 8px;font-size:.73rem;}
+.search-box{display:flex;align-items:center;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:0 9px;gap:4px;}
+.search-box input{background:none;border:none;color:var(--text);font-size:.8rem;padding:5px 0;
+  outline:none;font-family:var(--font);width:150px;}
+.search-box input::placeholder{color:var(--text3);}
+
+/* STAT CARDS */
+.cards-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;flex:1;min-width:130px;}
+.stat-card .s-label{font-size:.68rem;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.stat-card .s-value{font-size:1.45rem;font-weight:700;font-family:var(--mono);}
+.stat-card .s-sub{font-size:.68rem;color:var(--text3);margin-top:3px;}
+.stat-card.accent .s-value{color:var(--accent);}
+.stat-card.success .s-value{color:var(--accent2);}
+.stat-card.warn .s-value{color:var(--warn);}
+.stat-card.purple .s-value{color:var(--purple);}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;}
+.table-wrap table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.table-wrap th{background:var(--bg3);color:var(--text2);padding:8px 10px;text-align:left;
+  font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;position:sticky;top:0;}
+.table-wrap td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+.table-wrap tr:last-child td{border-bottom:none;}
+.table-wrap tr:hover td{background:var(--bg3);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);
+  z-index:1000;align-items:center;justify-content:center;padding:14px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;
+  width:100%;max-width:820px;max-height:93vh;display:flex;flex-direction:column;box-shadow:var(--shadow);}
+.modal-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:.92rem;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:1.1rem;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;}
+.modal-close:hover{background:var(--bg3);color:var(--text);}
+.modal-body{padding:16px 20px;overflow-y:auto;flex:1;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group label{font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;}
+.form-group input,.form-group select,.form-group textarea{
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);
+  color:var(--text);font-family:var(--font);font-size:.82rem;padding:7px 10px;outline:none;transition:border .15s;}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:70px;}
+
+/* SPLIT PANEL */
+.split-layout{display:flex;gap:12px;height:calc(100vh - 118px);}
+.split-left{width:310px;flex-shrink:0;display:flex;flex-direction:column;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.split-left-header{padding:9px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:6px;}
+.split-left-list{flex:1;overflow-y:auto;}
+.split-left-list::-webkit-scrollbar{width:4px;}
+.split-left-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.repo-item{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.repo-item:hover{background:var(--bg3);}
+.repo-item.active{background:rgba(59,130,246,.12);border-left:3px solid var(--accent);}
+.repo-item .ri-title{font-size:.82rem;font-weight:600;margin-bottom:3px;}
+.repo-item .ri-desc{font-size:.72rem;color:var(--text2);line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.repo-item .ri-actions{display:flex;gap:4px;margin-top:6px;}
+.split-right{flex:1;display:flex;flex-direction:column;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.split-right-header{padding:10px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.split-right-body{flex:1;overflow-y:auto;padding:14px 16px;}
+.split-right-body::-webkit-scrollbar{width:5px;}
+.split-right-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.field-row{display:flex;flex-direction:column;gap:3px;margin-bottom:12px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);}
+.field-row:last-child{border-bottom:none;}
+.field-label{font-size:.68rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
+.field-value{font-size:.82rem;color:var(--text);word-break:break-all;}
+.field-value a{color:var(--accent);text-decoration:none;}
+.field-value a:hover{text-decoration:underline;}
+.field-edit{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);
+  color:var(--text);font-family:var(--font);font-size:.82rem;padding:6px 9px;
+  outline:none;width:100%;transition:border .15s;}
+.field-edit:focus{border-color:var(--accent);}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;color:var(--text3);gap:10px;text-align:center;padding:30px;}
+.empty-state .es-icon{font-size:2.5rem;}
+.empty-state .es-text{font-size:.85rem;}
+
+/* OVERVIEW */
+.overview-section{margin-bottom:20px;}
+.overview-section h3{font-size:.82rem;font-weight:700;color:var(--text2);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:10px;}
+.db-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.db-card .dbc-icon{font-size:1.6rem;}
+.db-card .dbc-name{font-weight:600;font-size:.88rem;margin-bottom:2px;}
+.db-card .dbc-count{font-size:.76rem;color:var(--text2);}
+.db-card .dbc-badge{margin-left:auto;font-size:1.1rem;font-weight:700;font-family:var(--mono);color:var(--accent);}
+
+/* SETTINGS */
+.settings-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:14px;}
+.settings-section h3{font-size:.82rem;font-weight:700;color:var(--text2);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;}
+.settings-field{display:flex;flex-direction:column;gap:4px;}
+.settings-field label{font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.settings-field input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);
+  color:var(--text);font-family:var(--font);font-size:.82rem;padding:6px 9px;outline:none;transition:border .15s;}
+.settings-field input:focus{border-color:var(--accent);}
+.btn-group{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+.toast-item{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  padding:10px 16px;font-size:.8rem;min-width:200px;max-width:340px;
+  animation:slideIn .25s ease;box-shadow:var(--shadow);}
+.toast-item.success{border-color:var(--accent2);color:var(--accent2);}
+.toast-item.error{border-color:var(--danger);color:var(--danger);}
+.toast-item.warn{border-color:var(--warn);color:var(--warn);}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+
+/* SPINNER / LOADING */
+#loading-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,.85);
+  z-index:5000;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#loading-overlay.show{display:flex;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;}
+#loading-text{font-size:.88rem;color:var(--text2);}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MOBILE */
+@media(max-width:640px){
+  .split-layout{flex-direction:column;height:auto;}
+  .split-left{width:100%;max-height:240px;}
+  .split-right{min-height:280px;}
+  .app-title{display:none;}
+  header{padding:0 8px;}
+  .form-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-icon">🔐</div>
+    <h1>Repository Portal</h1>
+    <p>Enter your admin password to continue</p>
+    <div class="auth-input-wrap">
+      <input type="password" id="auth-pw" class="auth-input" placeholder="Password"
+        onkeydown="if(event.key==='Enter')tryLogin()" autocomplete="current-password"/>
+      <button class="auth-eye" onclick="toggleEye()" id="eye-btn" title="Show/hide">👁</button>
+    </div>
+    <button class="auth-submit" onclick="tryLogin()">Unlock Portal</button>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <span id="loading-text">Syncing with Firebase…</span>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="font-ctrl">
+      <button class="font-btn" onclick="changeFont(-1)">A-</button>
+      <span class="font-size-lbl" id="font-lbl">18</span>
+      <button class="font-btn" onclick="changeFont(1)">A+</button>
+    </div>
+    <span class="app-title">📁 Repository Portal</span>
+    <nav class="nav-tabs">
+      <button class="nav-btn active" onclick="showTab('overview',this)">📊 Overview</button>
+      <button class="nav-btn" onclick="showTab('portal',this)">🌐 Portal DB</button>
+      <button class="nav-btn" onclick="showTab('repository',this)">📦 Repository</button>
+      <button class="nav-btn" onclick="showTab('settings',this)">⚙️ Settings</button>
+    </nav>
+    <div class="header-right">
+      <span class="sync-dot" id="sync-dot" title="Sync status"></span>
+      <button class="signout-btn" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+  <main>
+
+    <!-- OVERVIEW -->
+    <div class="dashboard active" id="tab-overview">
+      <div class="page-header"><span class="page-title">Overview Dashboard</span></div>
+      <div class="cards-row" id="ov-stats"></div>
+      <div class="overview-section"><h3>Databases</h3><div id="ov-db-cards"></div></div>
+      <div class="overview-section"><h3>Quick Statistics</h3><div class="cards-row" id="ov-quick"></div></div>
+    </div>
+
+    <!-- PORTAL DB -->
+    <div class="dashboard" id="tab-portal">
+      <div class="page-header">
+        <span class="page-title">Portal &amp; Email Database</span>
+        <div class="toolbar">
+          <div class="search-box">🔍<input type="text" id="portal-search" placeholder="Search…" oninput="renderPortalTable()"/></div>
+          <button class="btn btn-primary" onclick="openPortalModal()">+ Add</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(backupPortal)">⬇ Backup</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(restorePortal)">⬆ Restore</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(exportPortal)">📤 Export</button>
+          <button class="btn btn-ghost" onclick="importPortal()">📥 Import</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th onclick="sortPortal('portalDescription')">Portal / Description ↕</th>
+            <th>Portal Address</th>
+            <th>Login / Username</th>
+            <th>Password</th>
+            <th>Remarks</th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody id="portal-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REPOSITORY -->
+    <div class="dashboard" id="tab-repository">
+      <div class="page-header">
+        <span class="page-title">Repository Database</span>
+        <div class="toolbar">
+          <div class="search-box">🔍<input type="text" id="repo-search" placeholder="Search…" oninput="renderRepoList()"/></div>
+          <button class="btn btn-primary" onclick="newRepoRecord()">+ Add</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(backupRepo)">⬇ Backup</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(restoreRepo)">⬆ Restore</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(exportRepo)">📤 Export</button>
+          <button class="btn btn-ghost" onclick="importRepo()">📥 Import</button>
+        </div>
+      </div>
+      <div class="split-layout">
+        <div class="split-left">
+          <div class="split-left-header">
+            <span style="font-size:.78rem;color:var(--text2);">Repositories</span>
+            <span id="repo-count" style="font-size:.72rem;color:var(--text3);margin-left:auto;"></span>
+          </div>
+          <div class="split-left-list" id="repo-list"></div>
+        </div>
+        <div class="split-right">
+          <div class="split-right-header">
+            <span id="repo-panel-title" style="font-size:.88rem;font-weight:600;">Select a repository</span>
+            <div class="toolbar" id="repo-panel-actions" style="display:none;">
+              <button class="btn btn-primary btn-sm" id="repo-edit-btn" onclick="startRepoEdit()">✏️ Edit Datafields</button>
+              <button class="btn btn-success btn-sm" id="repo-save-btn" style="display:none;" onclick="saveRepoEdit()">💾 Save</button>
+              <button class="btn btn-ghost btn-sm" id="repo-cancel-btn" style="display:none;" onclick="cancelRepoEdit()">✕ Cancel</button>
+            </div>
+          </div>
+          <div class="split-right-body" id="repo-right-body">
+            <div class="empty-state"><div class="es-icon">📂</div>
+              <div class="es-text">Select a repository from the left<br>to view its details.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="dashboard" id="tab-settings">
+      <div class="page-header"><span class="page-title">Settings &amp; Administration</span></div>
+      <div class="settings-section">
+        <h3>🔐 Change Admin Password</h3>
+        <div class="settings-grid">
+          <div class="settings-field"><label>Current Password</label><input type="password" id="s-cur"/></div>
+          <div class="settings-field"><label>New Password</label><input type="password" id="s-new"/></div>
+          <div class="settings-field"><label>Confirm New</label><input type="password" id="s-conf"/></div>
+        </div>
+        <div class="btn-group" style="margin-top:10px;">
+          <button class="btn btn-primary" onclick="changeAdminPassword()">Change Password</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>🌐 Portal Database</h3>
+        <div class="btn-group">
+          <button class="btn btn-ghost" onclick="requireAdmin(backupPortal)">⬇ Backup</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(restorePortal)">⬆ Restore</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(exportPortal)">📤 Export Excel</button>
+          <button class="btn btn-ghost" onclick="importPortal()">📥 Import Excel</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>📦 Repository Database</h3>
+        <div class="btn-group">
+          <button class="btn btn-ghost" onclick="requireAdmin(backupRepo)">⬇ Backup</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(restoreRepo)">⬆ Restore</button>
+          <button class="btn btn-ghost" onclick="requireAdmin(exportRepo)">📤 Export Excel</button>
+          <button class="btn btn-ghost" onclick="importRepo()">📥 Import Excel</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>⚙️ App Settings</h3>
+        <div class="btn-group">
+          <button class="btn btn-ghost" onclick="requireAdmin(backupSettings)">⬇ Backup Settings</button>
+          <button class="btn btn-ghost" onclick="restoreSettings()">⬆ Restore Settings</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>ℹ️ App Information</h3>
+        <div style="font-size:.82rem;color:var(--text2);line-height:2;">
+          <div><b>Firebase Project:</b> repository-15ce3</div>
+          <div><b>Github:</b> capulongfarms / repository</div>
+          <div><b>Version:</b> 1.0.0</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- PORTAL MODAL -->
+<div class="modal-overlay" id="portal-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="pm-title">Add Portal Record</span>
+      <button class="modal-close" onclick="closeModal('portal-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Portal Description *</label>
+          <input type="text" id="pf-desc" placeholder="e.g. Gmail, Github, Etisalat…"/>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Portal Address / URL</label>
+          <input type="text" id="pf-addr" placeholder="https://…"/>
+        </div>
+        <div class="form-group">
+          <label>Login Account / Username</label>
+          <input type="text" id="pf-login"/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="text" id="pf-pass"/>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Remarks / Notes</label>
+          <textarea id="pf-remarks"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('portal-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePortalRecord()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <span class="modal-title">Confirm Action</span>
+      <button class="modal-close" onclick="closeModal('confirm-modal')">✕</button>
+    </div>
+    <div class="modal-body"><p id="confirm-msg" style="font-size:.88rem;line-height:1.6;"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN AUTH MODAL -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal" style="max-width:340px;">
+    <div class="modal-header">
+      <span class="modal-title">Admin Authentication</span>
+      <button class="modal-close" onclick="closeModal('admin-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <p style="color:var(--text2);font-size:.85rem;margin-bottom:14px;">Enter admin password to continue</p>
+      <input type="password" id="admin-pw" onkeydown="if(event.key==='Enter')verifyAdmin()"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);
+        color:var(--text);font-family:var(--font);font-size:.9rem;padding:9px 12px;outline:none;text-align:center;"/>
+      <div id="admin-msg" style="color:var(--danger);font-size:.78rem;margin-top:8px;min-height:16px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('admin-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="verifyAdmin()">Verify</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- Hidden file inputs -->
+<input type="file" id="fi-portal" accept=".xlsx,.xls" style="display:none" onchange="handlePortalImport(this)"/>
+<input type="file" id="fi-repo"   accept=".xlsx,.xls" style="display:none" onchange="handleRepoImport(this)"/>
+<input type="file" id="fi-settings" accept=".json"   style="display:none" onchange="handleSettingsRestore(this)"/>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const PORTAL_COL  = 'portal_records';
+const REPO_COL    = 'repo_records';
+const SETTINGS_DOC= 'app_settings';
+const BACKUP_COL  = 'backups';
+
+const S = {
+  adminSession: false,
+  fontSz: parseInt(localStorage.getItem('fontSz')) || 18,
+  failCount: 0,
+  lockUntil: 0,
+  portalRecords: [],
+  repoRecords: [],
+  portalSortField: 'portalDescription',
+  portalSortDir: 1,
+  selectedRepoId: null,
+  repoEditMode: false,
+  adminCb: null,
+  _hashCache: null,
+};
+
+// Obfuscated default: "aneza654457"
+const DEFAULT_PW = atob('YW5lemE2NTQ0NTc=');
+
+// ═══════════════════════════════════════════════════
+//  SHA-256
+// ═══════════════════════════════════════════════════
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  HASH STORAGE
+// ═══════════════════════════════════════════════════
+async function getHash() {
+  if (S._hashCache) return S._hashCache;
+  // Try Firebase first
+  if (window._firebaseReady) {
+    try {
+      const snap = await window._db.collection(SETTINGS_DOC).doc('admin').get();
+      if (snap.exists && snap.data().passHash) {
+        S._hashCache = snap.data().passHash;
+        localStorage.setItem('adminHash', S._hashCache);
+        return S._hashCache;
+      }
+    } catch(e) {}
+  }
+  const local = localStorage.getItem('adminHash');
+  if (local) { S._hashCache = local; return local; }
+  // First time — hash default password
+  const h = await sha256(DEFAULT_PW);
+  await saveHash(h);
+  return h;
+}
+
+async function saveHash(h) {
+  S._hashCache = h;
+  localStorage.setItem('adminHash', h);
+  if (window._firebaseReady) {
+    try {
+      await window._db.collection(SETTINGS_DOC).doc('admin').set({passHash: h}, {merge: true});
+    } catch(e) {}
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════
+function toggleEye() {
+  const i = document.getElementById('auth-pw');
+  const b = document.getElementById('eye-btn');
+  if (i.type==='password') { i.type='text'; b.textContent='🙈'; }
+  else { i.type='password'; b.textContent='👁'; }
+}
+
+async function tryLogin() {
+  const now = Date.now();
+  if (now < S.lockUntil) {
+    const rem = Math.ceil((S.lockUntil - now) / 1000);
+    setAuthMsg('Locked — try again in ' + rem + 's', true);
+    return;
+  }
+  const pw = document.getElementById('auth-pw').value;
+  if (!pw) { setAuthMsg('Please enter your password'); return; }
+  const h = await sha256(pw);
+  const stored = await getHash();
+  if (h === stored) {
+    S.failCount = 0;
+    S.adminSession = true;
+    document.getElementById('auth-pw').value = '';
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    loadAllData();
+  } else {
+    S.failCount++;
+    document.getElementById('auth-pw').value = '';
+    if (S.failCount >= 5) {
+      S.lockUntil = Date.now() + 60000;
+      setAuthMsg('Too many attempts — locked 60s', true);
+    } else {
+      setAuthMsg('Incorrect password (' + (5 - S.failCount) + ' left)');
+    }
+  }
+}
+
+function setAuthMsg(m, lock) {
+  const el = document.getElementById('auth-msg');
+  el.textContent = m;
+  el.className = 'auth-msg' + (lock ? ' lock-msg' : '');
+}
+
+function signOut() {
+  S.adminSession = false;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  setTimeout(()=>{ document.getElementById('auth-pw').focus(); }, 100);
+}
+
+// ═══════════════════════════════════════════════════
+//  FONT SIZE
+// ═══════════════════════════════════════════════════
+function changeFont(d) {
+  S.fontSz = Math.max(10, Math.min(24, S.fontSz + d));
+  document.querySelector('html').style.fontSize = S.fontSz + 'px';
+  document.getElementById('font-lbl').textContent = S.fontSz;
+  localStorage.setItem('fontSz', S.fontSz);
+}
+// Apply saved font on load
+document.querySelector('html').style.fontSize = S.fontSz + 'px';
+
+// ═══════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.dashboard').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'overview') renderOverview();
+}
+
+// ═══════════════════════════════════════════════════
+//  FIREBASE DB HELPERS
+// ═══════════════════════════════════════════════════
+function setSyncStatus(st) {
+  const d = document.getElementById('sync-dot');
+  d.className = 'sync-dot' + (st==='ok' ? '' : st==='offline' ? ' offline' : ' error');
+}
+
+function showLoading(show, txt) {
+  document.getElementById('loading-overlay').className = show ? 'show' : '';
+  if (txt) document.getElementById('loading-text').textContent = txt;
+}
+
+// ═══════════════════════════════════════════════════
+//  LOAD ALL
+// ═══════════════════════════════════════════════════
+async function loadAllData() {
+  showLoading(true, 'Syncing with Firebase…');
+  try {
+    await Promise.all([loadPortal(), loadRepo()]);
+    setSyncStatus('ok');
+    // Seed if empty
+    if (S.portalRecords.length === 0) await seedPortal();
+    if (S.repoRecords.length === 0)   await seedRepo();
+  } catch(e) {
+    console.warn('Firebase load error:', e);
+    setSyncStatus('error');
+    toast('Using local cache (Firebase sync failed)', 'warn');
+    S.portalRecords = JSON.parse(localStorage.getItem('portalCache') || '[]');
+    S.repoRecords   = JSON.parse(localStorage.getItem('repoCache')   || '[]');
+  }
+  showLoading(false);
+  renderPortalTable();
+  renderRepoList();
+  renderOverview();
+}
+
+// ═══════════════════════════════════════════════════
+//  PORTAL CRUD
+// ═══════════════════════════════════════════════════
+async function loadPortal() {
+  const snap = await window._db.collection(PORTAL_COL).get();
+  S.portalRecords = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
+}
+
+let _pmEditId = null;
+
+function openPortalModal(rec) {
+  _pmEditId = rec ? rec.id : null;
+  document.getElementById('pm-title').textContent = rec ? 'Edit Portal Record' : 'Add Portal Record';
+  document.getElementById('pf-desc').value   = rec?.portalDescription || '';
+  document.getElementById('pf-addr').value   = rec?.portalAddress     || '';
+  document.getElementById('pf-login').value  = rec?.loginAccount      || '';
+  document.getElementById('pf-pass').value   = rec?.password          || '';
+  document.getElementById('pf-remarks').value= rec?.remarks           || '';
+  openModal('portal-modal');
+}
+
+async function savePortalRecord() {
+  if (!S.adminSession) { toast('Admin access required', 'error'); return; }
+  const data = {
+    portalDescription: document.getElementById('pf-desc').value.trim(),
+    portalAddress:     document.getElementById('pf-addr').value.trim(),
+    loginAccount:      document.getElementById('pf-login').value.trim(),
+    password:          document.getElementById('pf-pass').value.trim(),
+    remarks:           document.getElementById('pf-remarks').value.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+  if (!data.portalDescription) { toast('Description is required', 'error'); return; }
+  showLoading(true, 'Saving…');
+  try {
+    if (_pmEditId) {
+      await window._db.collection(PORTAL_COL).doc(_pmEditId).update(data);
+      const i = S.portalRecords.findIndex(r => r.id === _pmEditId);
+      if (i > -1) Object.assign(S.portalRecords[i], data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      const ref = await window._db.collection(PORTAL_COL).add(data);
+      S.portalRecords.push({id: ref.id, ...data});
+    }
+    localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
+    closeModal('portal-modal');
+    renderPortalTable(); renderOverview();
+    toast(_pmEditId ? 'Updated' : 'Added', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  showLoading(false);
+}
+
+async function deletePortalRecord(id) {
+  confirmDo('Delete this portal record? This cannot be undone.', async () => {
+    showLoading(true, 'Deleting…');
+    try {
+      await window._db.collection(PORTAL_COL).doc(id).delete();
+      S.portalRecords = S.portalRecords.filter(r => r.id !== id);
+      localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
+      renderPortalTable(); renderOverview();
+      toast('Deleted', 'success');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+    showLoading(false);
+  });
+}
+
+function sortPortal(field) {
+  if (S.portalSortField === field) S.portalSortDir *= -1;
+  else { S.portalSortField = field; S.portalSortDir = 1; }
+  renderPortalTable();
+}
+
+function renderPortalTable() {
+  const q = (document.getElementById('portal-search').value || '').toLowerCase();
+  let recs = [...S.portalRecords];
+  if (q) recs = recs.filter(r => Object.values(r).some(v => String(v||'').toLowerCase().includes(q)));
+  recs.sort((a,b) => String(a[S.portalSortField]||'').localeCompare(String(b[S.portalSortField]||'')) * S.portalSortDir);
+  const tb = document.getElementById('portal-tbody');
+  if (!recs.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px;">No records found</td></tr>';
+    return;
+  }
+  tb.innerHTML = recs.map(r => {
+    const safeR = encodeURIComponent(JSON.stringify(r));
+    return `<tr>
+      <td><strong>${esc(r.portalDescription)}</strong></td>
+      <td>${r.portalAddress ? `<a href="${esc(r.portalAddress)}" target="_blank" style="color:var(--accent);font-size:.74rem;">${esc(trunc(r.portalAddress,38))}</a>` : '—'}</td>
+      <td style="font-size:.78rem;">${esc(r.loginAccount||'—')}</td>
+      <td style="font-family:var(--mono);font-size:.78rem;">${esc(r.password||'—')}</td>
+      <td style="font-size:.74rem;color:var(--text2);">${esc(trunc(r.remarks||'',45))}</td>
+      <td><div style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-sm" onclick='openPortalModal(JSON.parse(decodeURIComponent("${safeR}")))'>✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="requireAdmin(()=>deletePortalRecord('${r.id}'))">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  REPOSITORY CRUD
+// ═══════════════════════════════════════════════════
+const REPO_FIELDS = [
+  {k:'repositoryTitle',         l:'Repository Title'},
+  {k:'repositoryDescription',   l:'Repository Description'},
+  {k:'localFolderDirectory',    l:'Local Folder Directory'},
+  {k:'vsCodeWorkspace',         l:'VS Code Workspace'},
+  {k:'vsCodeGhAuth',            l:'VS Code gh Auth / SSH Address'},
+  {k:'githubGoogleAcct',        l:'Github Google Account'},
+  {k:'githubUsername',          l:'Github Username'},
+  {k:'githubRepository',        l:'Github Repository'},
+  {k:'githubDomainAddress',     l:'Github Domain Address'},
+  {k:'firebaseGoogleAcct',      l:'Firebase Google Account'},
+  {k:'firebaseProjectAppName',  l:'Firebase Project App Name'},
+  {k:'firebaseProjectId',       l:'Firebase Project ID'},
+  {k:'cloudflareDomainDns',     l:'CloudFlare Domain (DNS)'},
+  {k:'cloudflareDomainPages',   l:'CloudFlare Pages'},
+  {k:'railway',                 l:'Railway'},
+  {k:'paymongo',                l:'Paymongo'},
+  {k:'remarks',                 l:'Remarks'},
+];
+
+async function loadRepo() {
+  const snap = await window._db.collection(REPO_COL).get();
+  S.repoRecords = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  localStorage.setItem('repoCache', JSON.stringify(S.repoRecords));
+}
+
+function renderRepoList() {
+  const q = (document.getElementById('repo-search').value || '').toLowerCase();
+  let recs = [...S.repoRecords];
+  if (q) recs = recs.filter(r =>
+    (r.repositoryTitle||'').toLowerCase().includes(q) ||
+    (r.repositoryDescription||'').toLowerCase().includes(q)
+  );
+  document.getElementById('repo-count').textContent = recs.length + ' record(s)';
+  const list = document.getElementById('repo-list');
+  if (!recs.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:.8rem;">No repositories found</div>';
+    return;
+  }
+  list.innerHTML = recs.map(r => `
+    <div class="repo-item${r.id===S.selectedRepoId?' active':''}" onclick="selectRepo('${r.id}')">
+      <div class="ri-title">${esc(r.repositoryTitle||'Untitled')}</div>
+      <div class="ri-desc">${esc(r.repositoryDescription||'No description')}</div>
+      <div class="ri-actions">
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();selectRepo('${r.id}');startRepoEdit()">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();requireAdmin(()=>deleteRepoRecord('${r.id}'))">🗑 Del</button>
+      </div>
+    </div>`).join('');
+}
+
+function selectRepo(id) {
+  S.selectedRepoId = id;
+  S.repoEditMode = false;
+  renderRepoList();
+  renderRepoPanel();
+}
+
+function renderRepoPanel() {
+  const rec = S.repoRecords.find(r => r.id === S.selectedRepoId);
+  document.getElementById('repo-panel-title').textContent = rec ? (rec.repositoryTitle||'Untitled') : 'Select a repository';
+  const pa = document.getElementById('repo-panel-actions');
+  pa.style.display = rec ? 'flex' : 'none';
+
+  if (rec) {
+    document.getElementById('repo-edit-btn').style.display   = S.repoEditMode ? 'none' : '';
+    document.getElementById('repo-save-btn').style.display   = S.repoEditMode ? '' : 'none';
+    document.getElementById('repo-cancel-btn').style.display = S.repoEditMode ? '' : 'none';
+  }
+
+  const body = document.getElementById('repo-right-body');
+  if (!rec) {
+    body.innerHTML = '<div class="empty-state"><div class="es-icon">📂</div><div class="es-text">Select a repository to view details</div></div>';
+    return;
+  }
+
+  const fields = REPO_FIELDS.filter(f => f.k !== 'repositoryTitle' && f.k !== 'repositoryDescription');
+  body.innerHTML =
+    (S.repoEditMode ? `
+      <div class="field-row">
+        <div class="field-label">Repository Title</div>
+        <input class="field-edit" id="re-repositoryTitle" value="${esc(rec.repositoryTitle||'')}"/>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Repository Description</div>
+        <textarea class="field-edit" id="re-repositoryDescription" rows="3">${esc(rec.repositoryDescription||'')}</textarea>
+      </div>` : '') +
+    fields.map(f => `
+      <div class="field-row">
+        <div class="field-label">${f.l}</div>
+        ${S.repoEditMode
+          ? `<input class="field-edit" id="re-${f.k}" value="${esc(rec[f.k]||'')}"/>`
+          : `<div class="field-value">${fmtField(f.k, rec[f.k])}</div>`
+        }
+      </div>`).join('');
+}
+
+function fmtField(k, v) {
+  if (!v) return '<span style="color:var(--text3)">—</span>';
+  if (String(v).match(/^https?:\/\//)) return `<a href="${esc(v)}" target="_blank">${esc(v)}</a>`;
+  return esc(v);
+}
+
+function startRepoEdit() {
+  if (!S.adminSession) { toast('Admin access required', 'error'); return; }
+  if (!S.selectedRepoId) { toast('Select a repository first', 'warn'); return; }
+  S.repoEditMode = true; renderRepoPanel();
+}
+function cancelRepoEdit() { S.repoEditMode = false; renderRepoPanel(); }
+
+async function saveRepoEdit() {
+  if (!S.adminSession) { toast('Admin access required', 'error'); return; }
+  const rec = S.repoRecords.find(r => r.id === S.selectedRepoId);
+  if (!rec) return;
+  const data = {updatedAt: new Date().toISOString()};
+  REPO_FIELDS.forEach(f => {
+    const el = document.getElementById('re-' + f.k);
+    if (el) data[f.k] = el.tagName === 'TEXTAREA' ? el.value.trim() : el.value.trim();
+  });
+  showLoading(true, 'Saving…');
+  try {
+    await window._db.collection(REPO_COL).doc(rec.id).update(data);
+    Object.assign(rec, data);
+    localStorage.setItem('repoCache', JSON.stringify(S.repoRecords));
+    S.repoEditMode = false;
+    renderRepoList(); renderRepoPanel(); renderOverview();
+    toast('Repository updated', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  showLoading(false);
+}
+
+async function deleteRepoRecord(id) {
+  confirmDo('Delete this repository record?', async () => {
+    showLoading(true, 'Deleting…');
+    try {
+      await window._db.collection(REPO_COL).doc(id).delete();
+      S.repoRecords = S.repoRecords.filter(r => r.id !== id);
+      if (S.selectedRepoId === id) S.selectedRepoId = null;
+      localStorage.setItem('repoCache', JSON.stringify(S.repoRecords));
+      renderRepoList(); renderRepoPanel(); renderOverview();
+      toast('Deleted', 'success');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+    showLoading(false);
+  });
+}
+
+async function newRepoRecord() {
+  if (!S.adminSession) { toast('Admin access required', 'error'); return; }
+  const blank = {};
+  REPO_FIELDS.forEach(f => blank[f.k] = '');
+  blank.repositoryTitle = 'New Repository';
+  blank.createdAt = new Date().toISOString();
+  showLoading(true, 'Creating…');
+  try {
+    const ref = await window._db.collection(REPO_COL).add(blank);
+    S.repoRecords.push({id: ref.id, ...blank});
+    localStorage.setItem('repoCache', JSON.stringify(S.repoRecords));
+    S.selectedRepoId = ref.id;
+    S.repoEditMode = true;
+    renderRepoList(); renderRepoPanel(); renderOverview();
+    toast('New record created — fill in details', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  showLoading(false);
+}
+
+// ═══════════════════════════════════════════════════
+//  OVERVIEW
+// ═══════════════════════════════════════════════════
+function renderOverview() {
+  document.getElementById('ov-stats').innerHTML = `
+    <div class="stat-card accent"><div class="s-label">Portal Records</div><div class="s-value">${S.portalRecords.length}</div><div class="s-sub">Portals &amp; emails</div></div>
+    <div class="stat-card success"><div class="s-label">Repositories</div><div class="s-value">${S.repoRecords.length}</div><div class="s-sub">Repo entries</div></div>
+    <div class="stat-card warn"><div class="s-label">Total Records</div><div class="s-value">${S.portalRecords.length + S.repoRecords.length}</div><div class="s-sub">All databases</div></div>
+    <div class="stat-card purple"><div class="s-label">Firebase</div><div class="s-value" style="font-size:.9rem;">🟢 Live</div><div class="s-sub">repository-15ce3</div></div>`;
+
+  document.getElementById('ov-db-cards').innerHTML = `
+    <div class="db-card"><div class="dbc-icon">🌐</div><div><div class="dbc-name">Portal &amp; Email Database</div><div class="dbc-count">Portals, logins, credentials</div></div><div class="dbc-badge">${S.portalRecords.length}</div></div>
+    <div class="db-card"><div class="dbc-icon">📦</div><div><div class="dbc-name">Repository Database</div><div class="dbc-count">Github, Firebase, domains, deployment</div></div><div class="dbc-badge">${S.repoRecords.length}</div></div>`;
+
+  document.getElementById('ov-quick').innerHTML = `
+    <div class="stat-card"><div class="s-label">Portals with URL</div><div class="s-value accent">${S.portalRecords.filter(r=>r.portalAddress).length}</div></div>
+    <div class="stat-card"><div class="s-label">Repos with Github</div><div class="s-value success">${S.repoRecords.filter(r=>r.githubRepository).length}</div></div>
+    <div class="stat-card"><div class="s-label">Repos with Firebase</div><div class="s-value warn">${S.repoRecords.filter(r=>r.firebaseProjectId).length}</div></div>
+    <div class="stat-card"><div class="s-label">Repos with Domain</div><div class="s-value purple">${S.repoRecords.filter(r=>r.cloudflareDomainDns).length}</div></div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  BACKUP / RESTORE / EXPORT / IMPORT
+// ═══════════════════════════════════════════════════
+async function backupPortal() {
+  showLoading(true, 'Backing up…');
+  try {
+    await window._db.collection(BACKUP_COL).doc('portal_backup').set({data: S.portalRecords, backedAt: new Date().toISOString()});
+    toast('Portal DB backed up to Firebase', 'success');
+  } catch(e) { toast('Backup error: '+e.message, 'error'); }
+  showLoading(false);
+}
+
+async function restorePortal() {
+  confirmDo('Restore Portal DB from Firebase backup? Current data will be replaced.', async () => {
+    showLoading(true, 'Restoring…');
+    try {
+      const snap = await window._db.collection(BACKUP_COL).doc('portal_backup').get();
+      if (!snap.exists) { toast('No backup found', 'warn'); showLoading(false); return; }
+      const records = snap.data().data || [];
+      const batch = window._db.batch();
+      records.forEach(r => {
+        const {id, ...data} = r;
+        batch.set(window._db.collection(PORTAL_COL).doc(id || genId()), data);
+      });
+      await batch.commit();
+      await loadPortal();
+      renderPortalTable(); renderOverview();
+      toast('Restored ' + records.length + ' records', 'success');
+    } catch(e) { toast('Restore error: '+e.message, 'error'); }
+    showLoading(false);
+  });
+}
+
+function exportPortal() {
+  if (!S.portalRecords.length) { toast('No data to export', 'warn'); return; }
+  const ws = XLSX.utils.json_to_sheet(S.portalRecords.map(r=>({
+    'Portal Description': r.portalDescription, 'Portal Address': r.portalAddress,
+    'Login Account': r.loginAccount, 'Password': r.password, 'Remarks': r.remarks
+  })));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Portal');
+  XLSX.writeFile(wb, 'portal_export_' + ds() + '.xlsx');
+  toast('Exported', 'success');
+}
+
+function importPortal() { document.getElementById('fi-portal').click(); }
+async function handlePortalImport(inp) {
+  const file = inp.files[0]; if (!file) return;
+  showLoading(true, 'Importing…');
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const rows = XLSX.utils.sheet_to_json(XLSX.read(e.target.result, {type:'array'}).Sheets[XLSX.read(e.target.result, {type:'array'}).SheetNames[0]]);
+      let count = 0;
+      for (const row of rows) {
+        const data = {
+          portalDescription: String(row['Portal Description']||row['portalDescription']||''),
+          portalAddress: String(row['Portal Address']||row['portalAddress']||''),
+          loginAccount: String(row['Login Account']||row['loginAccount']||''),
+          password: String(row['Password']||row['password']||''),
+          remarks: String(row['Remarks']||row['remarks']||''),
+          createdAt: new Date().toISOString(),
+        };
+        if (!data.portalDescription) continue;
+        const ref = await window._db.collection(PORTAL_COL).add(data);
+        S.portalRecords.push({id: ref.id, ...data}); count++;
+      }
+      localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
+      renderPortalTable(); renderOverview();
+      toast('Imported ' + count + ' records', 'success');
+    } catch(err) { toast('Import error: '+err.message, 'error'); }
+    inp.value = ''; showLoading(false);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function backupRepo() {
+  showLoading(true, 'Backing up…');
+  try {
+    await window._db.collection(BACKUP_COL).doc('repo_backup').set({data: S.repoRecords, backedAt: new Date().toISOString()});
+    toast('Repository DB backed up', 'success');
+  } catch(e) { toast('Error: '+e.message, 'error'); }
+  showLoading(false);
+}
+
+async function restoreRepo() {
+  confirmDo('Restore Repository DB from backup?', async () => {
+    showLoading(true, 'Restoring…');
+    try {
+      const snap = await window._db.collection(BACKUP_COL).doc('repo_backup').get();
+      if (!snap.exists) { toast('No backup found', 'warn'); showLoading(false); return; }
+      const records = snap.data().data || [];
+      const batch = window._db.batch();
+      records.forEach(r => {
+        const {id, ...data} = r;
+        batch.set(window._db.collection(REPO_COL).doc(id || genId()), data);
+      });
+      await batch.commit();
+      await loadRepo();
+      S.selectedRepoId = null;
+      renderRepoList(); renderRepoPanel(); renderOverview();
+      toast('Restored ' + records.length + ' records', 'success');
+    } catch(e) { toast('Error: '+e.message, 'error'); }
+    showLoading(false);
+  });
+}
+
+function exportRepo() {
+  if (!S.repoRecords.length) { toast('No data to export', 'warn'); return; }
+  const ws = XLSX.utils.json_to_sheet(S.repoRecords.map(r => {
+    const o = {}; REPO_FIELDS.forEach(f => o[f.l] = r[f.k]||''); return o;
+  }));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Repository');
+  XLSX.writeFile(wb, 'repository_export_' + ds() + '.xlsx');
+  toast('Exported', 'success');
+}
+
+function importRepo() { document.getElementById('fi-repo').click(); }
+async function handleRepoImport(inp) {
+  const file = inp.files[0]; if (!file) return;
+  showLoading(true, 'Importing…');
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      let count = 0;
+      for (const row of rows) {
+        const data = {createdAt: new Date().toISOString()};
+        REPO_FIELDS.forEach(f => data[f.k] = String(row[f.l]||row[f.k]||''));
+        if (!data.repositoryTitle) continue;
+        const ref = await window._db.collection(REPO_COL).add(data);
+        S.repoRecords.push({id: ref.id, ...data}); count++;
+      }
+      localStorage.setItem('repoCache', JSON.stringify(S.repoRecords));
+      renderRepoList(); renderOverview();
+      toast('Imported ' + count + ' records', 'success');
+    } catch(err) { toast('Import error: '+err.message, 'error'); }
+    inp.value = ''; showLoading(false);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function backupSettings() {
+  const s = {fontSz: S.fontSz, backedAt: new Date().toISOString()};
+  try {
+    await window._db.collection(BACKUP_COL).doc('settings_backup').set(s);
+    const blob = new Blob([JSON.stringify(s,null,2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'settings_' + ds() + '.json'; a.click();
+    toast('Settings backed up', 'success');
+  } catch(e) { toast('Error: '+e.message, 'error'); }
+}
+
+function restoreSettings() { document.getElementById('fi-settings').click(); }
+function handleSettingsRestore(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const s = JSON.parse(e.target.result);
+      if (s.fontSz) { S.fontSz = s.fontSz; changeFont(0); }
+      toast('Settings restored', 'success');
+    } catch(e) { toast('Invalid file', 'error'); }
+    inp.value = '';
+  };
+  r.readAsText(f);
+}
+
+// ═══════════════════════════════════════════════════
+//  ADMIN PASSWORD CHANGE
+// ═══════════════════════════════════════════════════
+async function changeAdminPassword() {
+  const cur  = document.getElementById('s-cur').value;
+  const nw   = document.getElementById('s-new').value;
+  const conf = document.getElementById('s-conf').value;
+  if (!cur||!nw||!conf) { toast('Fill all fields', 'warn'); return; }
+  if (nw !== conf) { toast('New passwords do not match', 'error'); return; }
+  if (nw.length < 6) { toast('Minimum 6 characters', 'warn'); return; }
+  const curH = await sha256(cur);
+  const stored = await getHash();
+  if (curH !== stored) { toast('Current password is incorrect', 'error'); return; }
+  await saveHash(await sha256(nw));
+  document.getElementById('s-cur').value = '';
+  document.getElementById('s-new').value = '';
+  document.getElementById('s-conf').value = '';
+  toast('Password updated', 'success');
+}
+
+// ═══════════════════════════════════════════════════
+//  ADMIN GATE
+// ═══════════════════════════════════════════════════
+function requireAdmin(cb) {
+  if (S.adminSession) { cb(); return; }
+  S.adminCb = cb;
+  document.getElementById('admin-pw').value = '';
+  document.getElementById('admin-msg').textContent = '';
+  openModal('admin-modal');
+  setTimeout(()=>document.getElementById('admin-pw').focus(), 100);
+}
+
+async function verifyAdmin() {
+  const pw = document.getElementById('admin-pw').value;
+  const h  = await sha256(pw);
+  const stored = await getHash();
+  if (h === stored) {
+    S.adminSession = true;
+    closeModal('admin-modal');
+    if (S.adminCb) { S.adminCb(); S.adminCb = null; }
+  } else {
+    document.getElementById('admin-msg').textContent = 'Incorrect password';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  MODALS & CONFIRM
+// ═══════════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+let _confirmCb = null;
+function confirmDo(msg, cb) {
+  _confirmCb = cb;
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-ok').onclick = () => { closeModal('confirm-modal'); if(_confirmCb){_confirmCb();_confirmCb=null;} };
+  openModal('confirm-modal');
+}
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+function toast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast-item ' + (type||'success');
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(()=>el.remove(), 3500);
+}
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function trunc(s, n) { return String(s||'').length > n ? s.slice(0,n)+'…' : String(s||''); }
+function ds() { return new Date().toISOString().slice(0,10); }
+function genId() { return Math.random().toString(36).slice(2); }
+
+// ═══════════════════════════════════════════════════
+//  SEED DATA (Portal — from Excel)
+// ═══════════════════════════════════════════════════
+async function seedPortal() {
+  const SEED = [
+    {portalDescription:'Tm Net',portalAddress:'1515',loginAccount:'mesrafl',password:'ubbl1984',remarks:''},
+    {portalDescription:'Tm Net',portalAddress:'1515',loginAccount:'kbk_sk',password:'5203kj',remarks:''},
+    {portalDescription:'Tm Net',portalAddress:'1515',loginAccount:'kbk_sk',password:'me4037q',remarks:''},
+    {portalDescription:'Tm Net',portalAddress:'1515',loginAccount:'kkteo',password:'123kapor',remarks:''},
+    {portalDescription:'Tm Net',portalAddress:'1511',loginAccount:'hsl',password:'stephen',remarks:''},
+    {portalDescription:'Hotmail',portalAddress:'Hotmail',loginAccount:'bkdesign',password:'consultant',remarks:''},
+    {portalDescription:'Hotmail',portalAddress:'Hotmail',loginAccount:'ykngu',password:'693121',remarks:''},
+    {portalDescription:'Hotmail',portalAddress:'Hotmail',loginAccount:'nguyukuik',password:'4440461',remarks:''},
+    {portalDescription:'Hotmail',portalAddress:'Hotmail',loginAccount:'Shell',password:'00074DD8915',remarks:''},
+    {portalDescription:'Protech wifi',portalAddress:'',loginAccount:'wireless',password:'79232F2374',remarks:''},
+    {portalDescription:'Etisalat-router',portalAddress:'',loginAccount:'vinuya',password:'eak66q8q',remarks:'Acct No.: 423368450'},
+    {portalDescription:'Etisalat-wifi',portalAddress:'',loginAccount:'vinuya',password:'0566914360',remarks:'Card no. 02390798'},
+    {portalDescription:'Etisalat-online',portalAddress:'',loginAccount:'vinuya',password:'654457',remarks:''},
+    {portalDescription:'Du Mobile',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:'Acct no: 1.16144025'},
+    {portalDescription:'Airasia',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
+    {portalDescription:'Malaysia Airlines (MAS)',portalAddress:'',loginAccount:'capulong',password:'aneza654457',remarks:'Aneza - Clue'},
+    {portalDescription:'SAL',portalAddress:'',loginAccount:'8230820223',password:'654457',remarks:'polcapulong@yahoo.com'},
+    {portalDescription:'Etihad',portalAddress:'',loginAccount:'capulong',password:'654457',remarks:'100070737793'},
+    {portalDescription:'Cebu Pacific',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
+    {portalDescription:'Qatar Airways',portalAddress:'',loginAccount:'504066878',password:'aneza654457',remarks:''},
+    {portalDescription:'Cathay Pacific',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'1860202027'},
+    {portalDescription:'Malaysia Enrich',portalAddress:'https://shop.myjournify.com/',loginAccount:'polcapulong@yahoo.com',password:'google account',remarks:'MH380333262'},
+    {portalDescription:'Pbebank',portalAddress:'',loginAccount:'polafiq',password:'Aneza654457*',remarks:'Latest 2016'},
+    {portalDescription:'Rakbank',portalAddress:'',loginAccount:'polcapulong',password:'aneza******',remarks:'200905160023203'},
+    {portalDescription:'ING Bank',portalAddress:'',loginAccount:'aneza',password:'aishamikha',remarks:'aneza278648$'},
+    {portalDescription:'Paypal',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:''},
+    {portalDescription:'MYEG',portalAddress:'',loginAccount:'capulong',password:'aishamikha',remarks:''},
+    {portalDescription:'Salik Dubai',portalAddress:'www.salik.gov.ae',loginAccount:'33184994',password:'3372',remarks:''},
+    {portalDescription:'Salik Dubai 2',portalAddress:'www.salik.gov.ae',loginAccount:'35757529',password:'9755',remarks:'polcapulong@yahoo.com'},
+    {portalDescription:'RTA Dubai',portalAddress:'https://www.rta.ae/wps/myportal/',loginAccount:'polcapulong',password:'Aneza654457*',remarks:'polcapulong@yahoo.com'},
+    {portalDescription:'FGB Bank',portalAddress:'',loginAccount:'1001208514',password:'aneza27****',remarks:'Pin: 2674'},
+    {portalDescription:'Msheireb-Oracle',portalAddress:'',loginAccount:'353',password:'Aneza65*57',remarks:''},
+    {portalDescription:'Msheireb-PC',portalAddress:'',loginAccount:'lcapulong',password:'Aneza65**57',remarks:''},
+    {portalDescription:'Msheireb-Outlook',portalAddress:'',loginAccount:'lcapulong',password:'Aneza65**57',remarks:''},
+    {portalDescription:'Logmein-Tamouh',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza278648',remarks:''},
+    {portalDescription:'Logmein-Personal',portalAddress:'',loginAccount:'polcapulong@hotmail.com',password:'aneza654457',remarks:'File access'},
+    {portalDescription:'UPC',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
+    {portalDescription:'oDesk',portalAddress:'',loginAccount:'polcapulong',password:'aneza278648',remarks:''},
+    {portalDescription:'CareerStructure',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
+    {portalDescription:'ADMA',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
+    {portalDescription:'Tamouh SAP',portalAddress:'http://portal.ad.tamouh:50000/irj/portal',loginAccount:'capulong282',password:'aneza654457',remarks:''},
+    {portalDescription:'Emirates ID',portalAddress:'www.emiratesID.ae',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457',remarks:'Note: CAPITAL A'},
+    {portalDescription:'CBI Bank',portalAddress:'https://cbionline.cbi.ae/',loginAccount:'polcapulong',password:'654457 + token',remarks:''},
+    {portalDescription:'Kahramaa',portalAddress:'',loginAccount:'lcapulong',password:'aneza654457',remarks:''},
+    {portalDescription:'UK Visa',portalAddress:'https://www.visa4uk.fco.gov.uk/Account/login',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'Note: CAPITAL A'},
+    {portalDescription:'US Visa CGI Federal',portalAddress:'https://cgifederal.secure.force.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Aneza Binti Ghazally'},
+    {portalDescription:'IFMA Learning',portalAddress:'https://store.partnerrc.com/IFMA/learning/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
+    {portalDescription:'PMI',portalAddress:'https://my.pmi.org',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
+    {portalDescription:'Qatar GBC',portalAddress:'https://study.qatargbc.org/',loginAccount:'lcapulong@msheireb.com',password:'aneza654457',remarks:''},
+    {portalDescription:'eBay',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
+    {portalDescription:'BMO Online PH',portalAddress:'http://bmonline.ph/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'OEC, OWWA online'},
+    {portalDescription:'POEA / DMW',portalAddress:'https://onlineservices.dmw.gov.ph/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'eRegistration: 2022070421568'},
+    {portalDescription:'NBI Online',portalAddress:'https://nbi-clearance.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'pin: 654457'},
+    {portalDescription:'IIEE Online',portalAddress:'https://membership.iiee.org.ph/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Member#23836-94'},
+    {portalDescription:'PRC Online',portalAddress:'https://online.prc.gov.ph/',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:''},
+    {portalDescription:'Github',portalAddress:'https://github.com/',loginAccount:'polcapulong@yahoo.com (Google)',password:'',remarks:'https://github.com/orgs/Capulong-Farms/dashboard'},
+    {portalDescription:'Cloudflare',portalAddress:'https://dash.cloudflare.com/',loginAccount:'Mikhailarmanuel@gmail.com',password:'',remarks:'Mikhail Account'},
+    {portalDescription:'Railway',portalAddress:'https://railway.com/',loginAccount:'polcapulong@yahoo.com (Google)',password:'',remarks:'Project: 7b2f6b63-612a-4d4c-8eab-1040494ec8c6'},
+    {portalDescription:'CapulongFarms',portalAddress:'https://capulongfarms.org/',loginAccount:'Public',password:'',remarks:'Main farming website'},
+    {portalDescription:'CapulongFarms-Halal',portalAddress:'https://halal.capulongfarms.org/',loginAccount:'Public',password:'',remarks:''},
+    {portalDescription:'CapulongFarms-BMS',portalAddress:'https://api.capulongfarms.org/',loginAccount:'admin',password:'aneza654457',remarks:''},
+    {portalDescription:'ChatGPT (Mikhail)',portalAddress:'https://chat.openai.com',loginAccount:'armanuelmikhail@gmail.com',password:'sypmyG-purtew-1hixmu',remarks:''},
+    {portalDescription:'ChatGPT (Leo)',portalAddress:'https://chat.openai.com',loginAccount:'polcapulong@yahoo.com',password:'via Google Acct',remarks:''},
+    {portalDescription:'ClaudeAI',portalAddress:'https://claude.ai',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'Use Google Acct'},
+    {portalDescription:'Absher (Leo)',portalAddress:'https://www.absher.sa/',loginAccount:'polcapulong / 2520016409',password:'aneza654457',remarks:'OTP: 0542761620'},
+    {portalDescription:'Absher (Dewi)',portalAddress:'https://www.absher.sa/',loginAccount:'neezee1969 / 2531430763',password:'Aneza654457',remarks:'OTP: 0548116944'},
+    {portalDescription:'Nafath',portalAddress:'',loginAccount:'2520016409',password:'654457',remarks:'OTP: 0542761620'},
+    {portalDescription:'Saudi Engineering',portalAddress:'https://eservices.saudieng.sa/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'OTP: 0542761620'},
+    {portalDescription:'SPLONLINE',portalAddress:'https://accounts.splonline.com.sa/',loginAccount:'2520016409',password:'Aneza654457*',remarks:'OTP: 0542761620'},
+    {portalDescription:'Tawakalna',portalAddress:'',loginAccount:'polcapulong',password:'Aneza654457*',remarks:'OTP: 0542761620'},
+    {portalDescription:'Saudia Al Fursan',portalAddress:'https://alfursan.saudia.com/',loginAccount:'1000183150',password:'aneza654457',remarks:'OTP: 0542761620'},
+    {portalDescription:'Tameeni',portalAddress:'https://www.tameeni.com/',loginAccount:'2520016409',password:'aneza654457',remarks:'OTP: 0542761620'},
+    {portalDescription:'Kaiser Health Group',portalAddress:'https://kaiserhealthgroup.net',loginAccount:'AppNo: 202412088707n6u',password:'aneza654457',remarks:'Policy No: 80880-1000446263-00-ULTIMATE; Renewal: 27 Nov 2025'},
+    {portalDescription:'Bupa',portalAddress:'',loginAccount:'32326870',password:'Aneza654457*',remarks:'OTP: 0542761620'},
+    {portalDescription:'SMC Hospital',portalAddress:'',loginAccount:'polcapulong (2520016409)',password:'aneza654457',remarks:'OTP: 0542761620'},
+    {portalDescription:'Sehhaty',portalAddress:'',loginAccount:'2520016409',password:'Aneza654457*',remarks:'OTP: 0542761620'},
+    {portalDescription:'Eatmarna',portalAddress:'',loginAccount:'2520016409',password:'Aneza654457*',remarks:'OTP: 0542761620'},
+    {portalDescription:'Ejar (Rental)',portalAddress:'https://eservices.ejar.sa/',loginAccount:'polcapulong',password:'Aneza654457*',remarks:'OTP: 0542761620'},
+    {portalDescription:'Mudad / GOSI',portalAddress:'https://mudad.com.sa/',loginAccount:'2520016409',password:'Aneza654457*',remarks:'OTP: 0542761620'},
+    {portalDescription:'Hayya Qatar (Leo)',portalAddress:'https://hayya.qa/',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'Hayya No.: PH8286670288'},
+    {portalDescription:'Egis Outlook',portalAddress:'',loginAccount:'leopoldo.capulong@egis-group.com',password:'Aneza861053*',remarks:'Expires 2025-10-14'},
+    {portalDescription:'Egis Unifer',portalAddress:'',loginAccount:'leopoldo.capulong',password:'Aneza861053-',remarks:'Expires 2025-11-10'},
+    {portalDescription:'Egis eTime',portalAddress:'https://suivi-activite.egis.fr/eTime',loginAccount:'l.capulong',password:'Aneza654457*',remarks:''},
+    {portalDescription:'Egis Avanteam',portalAddress:'https://avanteam.egis.fr/QIM/',loginAccount:'l.capulong',password:'Aneza691122*',remarks:'Incident reporting'},
+    {portalDescription:'Oracle Cloud / Unifier',portalAddress:'https://idcs-5f8efe8f4df5403093f9d627620409c9.identity.oraclecloud.com/',loginAccount:'Leopoldo.Capulong',password:'Aneza861053-',remarks:'OTP: 0542761620'},
+    {portalDescription:'Aconex',portalAddress:'https://ksa1.aconex.com/',loginAccount:'leopoldo.capulong@egis-group.com',password:'Aneza654457*',remarks:'Aug.2023'},
+    {portalDescription:'GIS Riyadh Green',portalAddress:'https://gis.riyadhgreen.sa',loginAccount:'Leo.capulong',password:'Leoc@p357951',remarks:'Security Q: Pampanga'},
+    {portalDescription:'Meeting Rooms Riyadh Green',portalAddress:'http://meetings.riyadhgreen.sa/green/',loginAccount:'leopoldo.capulong@egis-group.com',password:'Aneza654457*',remarks:''},
+    {portalDescription:'RCRC Wifi / Server',portalAddress:'',loginAccount:'capulong.l',password:'Cc123456',remarks:'P@ssw0rd - initial'},
+    {portalDescription:'Qiwa',portalAddress:'https://auth.qiwa.sa',loginAccount:'2520016409',password:'Aneza691122-',remarks:'OTP: 0542761620'},
+    {portalDescription:'TM Router',portalAddress:'',loginAccount:'capulong',password:'aneza654457',remarks:''},
+    {portalDescription:'TM WiFi 2.4G',portalAddress:'',loginAccount:'capulong',password:'aneza654457',remarks:'New Code 2022'},
+    {portalDescription:'TM WiFi 5G',portalAddress:'',loginAccount:'capulong-5g',password:'aneza654457',remarks:'Reward: 6364020023376620'},
+    {portalDescription:'UniFi Malaysia',portalAddress:'https://unifi.com.my/',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'Acct: 1037187430'},
+    {portalDescription:'IWK Seremban',portalAddress:'https://www.iwk.com.my/customer/ebill',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Acct: 97435663'},
+    {portalDescription:'SAINS Water',portalAddress:'https://www.sainswater.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Acct: 050-0043179-0316'},
+    {portalDescription:'MySejahtera',portalAddress:'https://mysejahtera.malaysia.gov.my/',loginAccount:'9660542761620',password:'aneza654457',remarks:''},
+    {portalDescription:'eKonsular Malaysia',portalAddress:'https://ekonsular.kln.gov.my/',loginAccount:'691122105616',password:'Aneza654457*',remarks:'polcapulong@yahoo.com'},
+    {portalDescription:'Pag-Ibig',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:''},
+    {portalDescription:'Shopee Malaysia',portalAddress:'https://shopee.com.my/',loginAccount:'polcapulong',password:'Aneza654457*',remarks:'OTP: (+60) 1116456170'},
+    {portalDescription:'LinkedIn',portalAddress:'https://www.linkedin.com/',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:''},
+    {portalDescription:'Facebook (Leo)',portalAddress:'https://facebook.com',loginAccount:'polcapulong@yahoo.com',password:'AnezaAishaMikha*2674',remarks:'OTP: 0542761620'},
+    {portalDescription:'Facebook Business (CapulongFarms)',portalAddress:'https://facebook.com',loginAccount:'polcapulong@yahoo.com',password:'CapulongFarms654457*',remarks:'capulongfarms.org'},
+    {portalDescription:'Gmail (polcapulong1)',portalAddress:'',loginAccount:'polcapulong1@gmail.com',password:'Aneza654457*',remarks:'Outlook added 5/1/2026'},
+    {portalDescription:'Yahoo Mail',portalAddress:'',loginAccount:'polcapulong',password:'AnezaAishaMikha*68699803',remarks:'OTP: +97477940625'},
+    {portalDescription:'Netflix',portalAddress:'https://netflix.com',loginAccount:'aishamerly@yahoo.com',password:'ghazallyfamily2024',remarks:'capulongfamily compromised Aug.2024'},
+    {portalDescription:'Amazon Prime',portalAddress:'https://amazon.com',loginAccount:'neezee_ghazally@yahoo.com',password:'HoldMyHand_69',remarks:'Credit card: 03/28'},
+    {portalDescription:'STCPay',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'Nafath: 861053',remarks:''},
+    {portalDescription:'MobilyPay',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'654457',remarks:'Bank al Bilad SA4115134018960033147766'},
+    {portalDescription:'Mobily Apps',portalAddress:'',loginAccount:'polcapulong',password:'Aneza654457',remarks:'OTP: 0542761620'},
+    {portalDescription:'Smart Life (Tuya)',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'For Remote Socket; Login: 9664573065'},
+    {portalDescription:'YooSee CCTV',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Acct: 013434267'},
+    {portalDescription:'Solarman',portalAddress:'',loginAccount:'1535375262 / polcapulong@yahoo.com',password:'aneza654457',remarks:''},
+    {portalDescription:'PELCO 1 Philippines',portalAddress:'https://online.pelco1.org.ph/',loginAccount:'loucapulong23@gmail.com',password:'pelco_LA2020',remarks:''},
+    {portalDescription:'St. Andrews Academy Admin',portalAddress:'',loginAccount:'Admin Password',password:'aneza654457',remarks:''},
+    {portalDescription:'St. Andrews Academy Portal',portalAddress:'https://st-andrews-academy.github.io/',loginAccount:'aneza654457 (admin)',password:'',remarks:''},
+    {portalDescription:'St. Andrews Email',portalAddress:'',loginAccount:'st_andrews_academy@hotmail.com',password:'aneza654457',remarks:'Backup: polcapulong@yahoo.com'},
+    {portalDescription:'Firebase (polcapulong)',portalAddress:'https://console.firebase.google.com',loginAccount:'polcapulong@yahoo.com (Google)',password:'',remarks:''},
+    {portalDescription:'Remitly',portalAddress:'https://www.remitly.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
+    {portalDescription:'Tableau Desktop',portalAddress:'https://www.tableau.com/',loginAccount:'License: TCJF-A9F1-8570-BAFD-57A4',password:'',remarks:''},
+    {portalDescription:'Zakat2u Malaysia',portalAddress:'https://www.zakat2u.com.my/',loginAccount:'6911221056',password:'Aneza654457*',remarks:'Zakat fitrah'},
+    {portalDescription:'Remitly',portalAddress:'https://www.remitly.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
+    {portalDescription:'MYIPTV4K (Leo)',portalAddress:'',loginAccount:'5217963912468534',password:'81260934',remarks:'Exp: 2026-06-14'},
+    {portalDescription:'eTravel Apps PH',portalAddress:'',loginAccount:'eGovPH: 654457',password:'654457',remarks:'polcapulong@yahoo.com'},
+    {portalDescription:'UAE Exchange',portalAddress:'https://qa.uaeexchange.com/',loginAccount:'polcapulong#',password:'Aneza654457#',remarks:'Reg: 0005763414420265'},
+  ];
+  const batch = window._db.batch();
+  SEED.forEach(r => {
+    r.createdAt = new Date().toISOString();
+    const ref = window._db.collection(PORTAL_COL).doc();
+    batch.set(ref, r);
+    S.portalRecords.push({id: ref.id, ...r});
+  });
+  await batch.commit();
+  localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
+  toast('Portal records seeded (' + SEED.length + ' records)', 'success');
+}
+
+// ═══════════════════════════════════════════════════
+//  SEED DATA (Repository)
+// ═══════════════════════════════════════════════════
+async function seedRepo() {
+  const SEED = [
+    {repositoryTitle:'Repository Portal',repositoryDescription:'This portal — records, maintains and archives portals, emails and repositories using Firebase',localFolderDirectory:'C:/Claude/Projects/Repository',vsCodeWorkspace:'Repository.code-workspace',vsCodeGhAuth:'git@github.com:capulongfarms/repository.git',githubGoogleAcct:'polcapulong@yahoo.com',githubUsername:'capulongfarms',githubRepository:'repository',githubDomainAddress:'https://capulongfarms.github.io/repository',firebaseGoogleAcct:'polcapulong@yahoo.com',firebaseProjectAppName:'repository',firebaseProjectId:'repository-15ce3',cloudflareDomainDns:'',cloudflareDomainPages:'',railway:'',paymongo:'',remarks:'Self-referencing entry'},
+    {repositoryTitle:'St. Andrews Academy Portal',repositoryDescription:'Student alumni and school management portal with Firebase backend',localFolderDirectory:'C:/Claude/Projects/St_Andrews',vsCodeWorkspace:'St_Andrews.code-workspace',vsCodeGhAuth:'git@github.com:st-andrews-academy/st-andrews-academy.github.io.git',githubGoogleAcct:'st_andrews_academy@gmail.com',githubUsername:'st-andrews-academy',githubRepository:'st-andrews-academy.github.io',githubDomainAddress:'https://st-andrews-academy.github.io',firebaseGoogleAcct:'st_andrews_academy@gmail.com',firebaseProjectAppName:'st-andrews-academy',firebaseProjectId:'st-andrews-academy',cloudflareDomainDns:'',cloudflareDomainPages:'',railway:'',paymongo:'',remarks:'Alumni DB portal'},
+    {repositoryTitle:'CapulongFarms Main Site',repositoryDescription:'Main Capulong Farms website with public pages',localFolderDirectory:'C:/Claude/Projects/CapulongFarms',vsCodeWorkspace:'CapulongFarms.code-workspace',vsCodeGhAuth:'git@github.com:capulongfarms/capulongfarms.github.io.git',githubGoogleAcct:'polcapulong@yahoo.com',githubUsername:'capulongfarms',githubRepository:'capulongfarms.github.io',githubDomainAddress:'https://capulongfarms.org',firebaseGoogleAcct:'polcapulong@yahoo.com',firebaseProjectAppName:'capulongfarms',firebaseProjectId:'capulongfarms',cloudflareDomainDns:'capulongfarms.org',cloudflareDomainPages:'capulongfarms.pages.dev',railway:'https://railway.com/project/7b2f6b63-612a-4d4c-8eab-1040494ec8c6',paymongo:'',remarks:'Main farming portal'},
+    {repositoryTitle:'CapulongFarms Halal',repositoryDescription:'Halal product sub-portal',localFolderDirectory:'C:/Claude/Projects/CapulongFarms-Halal',vsCodeWorkspace:'',vsCodeGhAuth:'',githubGoogleAcct:'polcapulong@yahoo.com',githubUsername:'capulongfarms',githubRepository:'halal',githubDomainAddress:'https://halal.capulongfarms.org',firebaseGoogleAcct:'polcapulong@yahoo.com',firebaseProjectAppName:'',firebaseProjectId:'',cloudflareDomainDns:'halal.capulongfarms.org',cloudflareDomainPages:'',railway:'',paymongo:'',remarks:''},
+    {repositoryTitle:'Agricultural Market Vendors',repositoryDescription:'Local vendors database for agricultural market',localFolderDirectory:'C:/Claude/Projects/Agricultural_Market',vsCodeWorkspace:'',vsCodeGhAuth:'',githubGoogleAcct:'polcapulong@yahoo.com',githubUsername:'capulongfarms',githubRepository:'agricultural-market',githubDomainAddress:'',firebaseGoogleAcct:'polcapulong@yahoo.com',firebaseProjectAppName:'',firebaseProjectId:'',cloudflareDomainDns:'',cloudflareDomainPages:'',railway:'',paymongo:'PayMongo Philippines',remarks:'file:///C:/Claude/Projects/Agricultural_Market/Vendors.html'},
+  ];
+  const batch = window._db.batch();
+  SEED.forEach(r => {
+    r.createdAt = new Date().toISOString();
+    const ref = window._db.collection(REPO_COL).doc();
+    batch.set(ref, r);
+    S.repoRecords.push({id: ref.id, ...r});
+  });
+  await batch.commit();
+  localStorage.setItem('repoCache', JSON.stringify(S.repoRecords));
+  toast('Repository records seeded', 'success');
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  document.getElementById('font-lbl').textContent = S.fontSz;
+  document.getElementById('auth-pw').focus();
+});
+</script>
+</body>
+</html>
