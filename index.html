@@ -978,7 +978,12 @@ function renderRepoPanel() {
           ? `<input class="field-edit" id="re-${f.k}" value="${esc(rec[f.k]||'')}"/>`
           : `<div class="field-value">${fmtField(f.k, rec[f.k])}</div>`
         }
-      </div>`).join('');
+      </div>`).join('') +
+    (rec.lastModified ? `
+      <div class="field-row" style="margin-top:6px;border-bottom:none;padding-bottom:0;">
+        <div class="field-label" style="color:var(--text3);">Last Modified</div>
+        <div class="field-value" style="color:var(--text3);font-size:.76rem;">${fmtDate(rec.lastModified)}</div>
+      </div>` : '');
 }
 
 function fmtField(k, v) {
@@ -998,7 +1003,8 @@ async function saveRepoEdit() {
   if (!S.adminSession) { toast('Admin access required', 'error'); return; }
   const rec = S.repoRecords.find(r => r.id === S.selectedRepoId);
   if (!rec) return;
-  const data = {updatedAt: new Date().toISOString()};
+  const now = new Date().toISOString();
+  const data = {updatedAt: now, lastModified: now};
   REPO_FIELDS.forEach(f => {
     const el = document.getElementById('re-' + f.k);
     if (el) data[f.k] = el.tagName === 'TEXTAREA' ? el.value.trim() : el.value.trim();
@@ -1036,6 +1042,7 @@ async function newRepoRecord() {
   REPO_FIELDS.forEach(f => blank[f.k] = '');
   blank.repositoryTitle = 'New Repository';
   blank.createdAt = new Date().toISOString();
+  blank.lastModified = blank.createdAt;
   showLoading(true, 'Creating…');
   try {
     const ref = await window._db.collection(REPO_COL).add(blank);
@@ -1448,172 +1455,10 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function trunc(s, n) { return String(s||'').length > n ? s.slice(0,n)+'…' : String(s||''); }
 function ds() { return new Date().toISOString().slice(0,10); }
 function genId() { return Math.random().toString(36).slice(2); }
-
-// ═══════════════════════════════════════════════════
-//  SEED DATA (Portal — from Excel)
-// ═══════════════════════════════════════════════════
-async function seedPortal() {
-  const SEED = [
-    {portalDescription:'Tm Net',portalAddress:'1515',loginAccount:'mesrafl',password:'ubbl1984',remarks:''},
-    {portalDescription:'Tm Net',portalAddress:'1515',loginAccount:'kbk_sk',password:'5203kj',remarks:''},
-    {portalDescription:'Tm Net',portalAddress:'1515',loginAccount:'kbk_sk',password:'me4037q',remarks:''},
-    {portalDescription:'Tm Net',portalAddress:'1515',loginAccount:'kkteo',password:'123kapor',remarks:''},
-    {portalDescription:'Tm Net',portalAddress:'1511',loginAccount:'hsl',password:'stephen',remarks:''},
-    {portalDescription:'Hotmail',portalAddress:'Hotmail',loginAccount:'bkdesign',password:'consultant',remarks:''},
-    {portalDescription:'Hotmail',portalAddress:'Hotmail',loginAccount:'ykngu',password:'693121',remarks:''},
-    {portalDescription:'Hotmail',portalAddress:'Hotmail',loginAccount:'nguyukuik',password:'4440461',remarks:''},
-    {portalDescription:'Hotmail',portalAddress:'Hotmail',loginAccount:'Shell',password:'00074DD8915',remarks:''},
-    {portalDescription:'Protech wifi',portalAddress:'',loginAccount:'wireless',password:'79232F2374',remarks:''},
-    {portalDescription:'Etisalat-router',portalAddress:'',loginAccount:'vinuya',password:'eak66q8q',remarks:'Acct No.: 423368450'},
-    {portalDescription:'Etisalat-wifi',portalAddress:'',loginAccount:'vinuya',password:'0566914360',remarks:'Card no. 02390798'},
-    {portalDescription:'Etisalat-online',portalAddress:'',loginAccount:'vinuya',password:'654457',remarks:''},
-    {portalDescription:'Du Mobile',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:'Acct no: 1.16144025'},
-    {portalDescription:'Airasia',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
-    {portalDescription:'Malaysia Airlines (MAS)',portalAddress:'',loginAccount:'capulong',password:'aneza654457',remarks:'Aneza - Clue'},
-    {portalDescription:'SAL',portalAddress:'',loginAccount:'8230820223',password:'654457',remarks:'polcapulong@yahoo.com'},
-    {portalDescription:'Etihad',portalAddress:'',loginAccount:'capulong',password:'654457',remarks:'100070737793'},
-    {portalDescription:'Cebu Pacific',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
-    {portalDescription:'Qatar Airways',portalAddress:'',loginAccount:'504066878',password:'aneza654457',remarks:''},
-    {portalDescription:'Cathay Pacific',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'1860202027'},
-    {portalDescription:'Malaysia Enrich',portalAddress:'https://shop.myjournify.com/',loginAccount:'polcapulong@yahoo.com',password:'google account',remarks:'MH380333262'},
-    {portalDescription:'Pbebank',portalAddress:'',loginAccount:'polafiq',password:'Aneza654457*',remarks:'Latest 2016'},
-    {portalDescription:'Rakbank',portalAddress:'',loginAccount:'polcapulong',password:'aneza******',remarks:'200905160023203'},
-    {portalDescription:'ING Bank',portalAddress:'',loginAccount:'aneza',password:'aishamikha',remarks:'aneza278648$'},
-    {portalDescription:'Paypal',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:''},
-    {portalDescription:'MYEG',portalAddress:'',loginAccount:'capulong',password:'aishamikha',remarks:''},
-    {portalDescription:'Salik Dubai',portalAddress:'www.salik.gov.ae',loginAccount:'33184994',password:'3372',remarks:''},
-    {portalDescription:'Salik Dubai 2',portalAddress:'www.salik.gov.ae',loginAccount:'35757529',password:'9755',remarks:'polcapulong@yahoo.com'},
-    {portalDescription:'RTA Dubai',portalAddress:'https://www.rta.ae/wps/myportal/',loginAccount:'polcapulong',password:'Aneza654457*',remarks:'polcapulong@yahoo.com'},
-    {portalDescription:'FGB Bank',portalAddress:'',loginAccount:'1001208514',password:'aneza27****',remarks:'Pin: 2674'},
-    {portalDescription:'Msheireb-Oracle',portalAddress:'',loginAccount:'353',password:'Aneza65*57',remarks:''},
-    {portalDescription:'Msheireb-PC',portalAddress:'',loginAccount:'lcapulong',password:'Aneza65**57',remarks:''},
-    {portalDescription:'Msheireb-Outlook',portalAddress:'',loginAccount:'lcapulong',password:'Aneza65**57',remarks:''},
-    {portalDescription:'Logmein-Tamouh',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza278648',remarks:''},
-    {portalDescription:'Logmein-Personal',portalAddress:'',loginAccount:'polcapulong@hotmail.com',password:'aneza654457',remarks:'File access'},
-    {portalDescription:'UPC',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
-    {portalDescription:'oDesk',portalAddress:'',loginAccount:'polcapulong',password:'aneza278648',remarks:''},
-    {portalDescription:'CareerStructure',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
-    {portalDescription:'ADMA',portalAddress:'',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
-    {portalDescription:'Tamouh SAP',portalAddress:'http://portal.ad.tamouh:50000/irj/portal',loginAccount:'capulong282',password:'aneza654457',remarks:''},
-    {portalDescription:'Emirates ID',portalAddress:'www.emiratesID.ae',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457',remarks:'Note: CAPITAL A'},
-    {portalDescription:'CBI Bank',portalAddress:'https://cbionline.cbi.ae/',loginAccount:'polcapulong',password:'654457 + token',remarks:''},
-    {portalDescription:'Kahramaa',portalAddress:'',loginAccount:'lcapulong',password:'aneza654457',remarks:''},
-    {portalDescription:'UK Visa',portalAddress:'https://www.visa4uk.fco.gov.uk/Account/login',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'Note: CAPITAL A'},
-    {portalDescription:'US Visa CGI Federal',portalAddress:'https://cgifederal.secure.force.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Aneza Binti Ghazally'},
-    {portalDescription:'IFMA Learning',portalAddress:'https://store.partnerrc.com/IFMA/learning/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
-    {portalDescription:'PMI',portalAddress:'https://my.pmi.org',loginAccount:'polcapulong',password:'aneza654457',remarks:''},
-    {portalDescription:'Qatar GBC',portalAddress:'https://study.qatargbc.org/',loginAccount:'lcapulong@msheireb.com',password:'aneza654457',remarks:''},
-    {portalDescription:'eBay',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
-    {portalDescription:'BMO Online PH',portalAddress:'http://bmonline.ph/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'OEC, OWWA online'},
-    {portalDescription:'POEA / DMW',portalAddress:'https://onlineservices.dmw.gov.ph/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'eRegistration: 2022070421568'},
-    {portalDescription:'NBI Online',portalAddress:'https://nbi-clearance.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'pin: 654457'},
-    {portalDescription:'IIEE Online',portalAddress:'https://membership.iiee.org.ph/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Member#23836-94'},
-    {portalDescription:'PRC Online',portalAddress:'https://online.prc.gov.ph/',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:''},
-    {portalDescription:'Github',portalAddress:'https://github.com/',loginAccount:'polcapulong@yahoo.com (Google)',password:'',remarks:'https://github.com/orgs/Capulong-Farms/dashboard'},
-    {portalDescription:'Cloudflare',portalAddress:'https://dash.cloudflare.com/',loginAccount:'Mikhailarmanuel@gmail.com',password:'',remarks:'Mikhail Account'},
-    {portalDescription:'Railway',portalAddress:'https://railway.com/',loginAccount:'polcapulong@yahoo.com (Google)',password:'',remarks:'Project: 7b2f6b63-612a-4d4c-8eab-1040494ec8c6'},
-    {portalDescription:'CapulongFarms',portalAddress:'https://capulongfarms.org/',loginAccount:'Public',password:'',remarks:'Main farming website'},
-    {portalDescription:'CapulongFarms-Halal',portalAddress:'https://halal.capulongfarms.org/',loginAccount:'Public',password:'',remarks:''},
-    {portalDescription:'CapulongFarms-BMS',portalAddress:'https://api.capulongfarms.org/',loginAccount:'admin',password:'aneza654457',remarks:''},
-    {portalDescription:'ChatGPT (Mikhail)',portalAddress:'https://chat.openai.com',loginAccount:'armanuelmikhail@gmail.com',password:'sypmyG-purtew-1hixmu',remarks:''},
-    {portalDescription:'ChatGPT (Leo)',portalAddress:'https://chat.openai.com',loginAccount:'polcapulong@yahoo.com',password:'via Google Acct',remarks:''},
-    {portalDescription:'ClaudeAI',portalAddress:'https://claude.ai',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'Use Google Acct'},
-    {portalDescription:'Absher (Leo)',portalAddress:'https://www.absher.sa/',loginAccount:'polcapulong / 2520016409',password:'aneza654457',remarks:'OTP: 0542761620'},
-    {portalDescription:'Absher (Dewi)',portalAddress:'https://www.absher.sa/',loginAccount:'neezee1969 / 2531430763',password:'Aneza654457',remarks:'OTP: 0548116944'},
-    {portalDescription:'Nafath',portalAddress:'',loginAccount:'2520016409',password:'654457',remarks:'OTP: 0542761620'},
-    {portalDescription:'Saudi Engineering',portalAddress:'https://eservices.saudieng.sa/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'OTP: 0542761620'},
-    {portalDescription:'SPLONLINE',portalAddress:'https://accounts.splonline.com.sa/',loginAccount:'2520016409',password:'Aneza654457*',remarks:'OTP: 0542761620'},
-    {portalDescription:'Tawakalna',portalAddress:'',loginAccount:'polcapulong',password:'Aneza654457*',remarks:'OTP: 0542761620'},
-    {portalDescription:'Saudia Al Fursan',portalAddress:'https://alfursan.saudia.com/',loginAccount:'1000183150',password:'aneza654457',remarks:'OTP: 0542761620'},
-    {portalDescription:'Tameeni',portalAddress:'https://www.tameeni.com/',loginAccount:'2520016409',password:'aneza654457',remarks:'OTP: 0542761620'},
-    {portalDescription:'Kaiser Health Group',portalAddress:'https://kaiserhealthgroup.net',loginAccount:'AppNo: 202412088707n6u',password:'aneza654457',remarks:'Policy No: 80880-1000446263-00-ULTIMATE; Renewal: 27 Nov 2025'},
-    {portalDescription:'Bupa',portalAddress:'',loginAccount:'32326870',password:'Aneza654457*',remarks:'OTP: 0542761620'},
-    {portalDescription:'SMC Hospital',portalAddress:'',loginAccount:'polcapulong (2520016409)',password:'aneza654457',remarks:'OTP: 0542761620'},
-    {portalDescription:'Sehhaty',portalAddress:'',loginAccount:'2520016409',password:'Aneza654457*',remarks:'OTP: 0542761620'},
-    {portalDescription:'Eatmarna',portalAddress:'',loginAccount:'2520016409',password:'Aneza654457*',remarks:'OTP: 0542761620'},
-    {portalDescription:'Ejar (Rental)',portalAddress:'https://eservices.ejar.sa/',loginAccount:'polcapulong',password:'Aneza654457*',remarks:'OTP: 0542761620'},
-    {portalDescription:'Mudad / GOSI',portalAddress:'https://mudad.com.sa/',loginAccount:'2520016409',password:'Aneza654457*',remarks:'OTP: 0542761620'},
-    {portalDescription:'Hayya Qatar (Leo)',portalAddress:'https://hayya.qa/',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'Hayya No.: PH8286670288'},
-    {portalDescription:'Egis Outlook',portalAddress:'',loginAccount:'leopoldo.capulong@egis-group.com',password:'Aneza861053*',remarks:'Expires 2025-10-14'},
-    {portalDescription:'Egis Unifer',portalAddress:'',loginAccount:'leopoldo.capulong',password:'Aneza861053-',remarks:'Expires 2025-11-10'},
-    {portalDescription:'Egis eTime',portalAddress:'https://suivi-activite.egis.fr/eTime',loginAccount:'l.capulong',password:'Aneza654457*',remarks:''},
-    {portalDescription:'Egis Avanteam',portalAddress:'https://avanteam.egis.fr/QIM/',loginAccount:'l.capulong',password:'Aneza691122*',remarks:'Incident reporting'},
-    {portalDescription:'Oracle Cloud / Unifier',portalAddress:'https://idcs-5f8efe8f4df5403093f9d627620409c9.identity.oraclecloud.com/',loginAccount:'Leopoldo.Capulong',password:'Aneza861053-',remarks:'OTP: 0542761620'},
-    {portalDescription:'Aconex',portalAddress:'https://ksa1.aconex.com/',loginAccount:'leopoldo.capulong@egis-group.com',password:'Aneza654457*',remarks:'Aug.2023'},
-    {portalDescription:'GIS Riyadh Green',portalAddress:'https://gis.riyadhgreen.sa',loginAccount:'Leo.capulong',password:'Leoc@p357951',remarks:'Security Q: Pampanga'},
-    {portalDescription:'Meeting Rooms Riyadh Green',portalAddress:'http://meetings.riyadhgreen.sa/green/',loginAccount:'leopoldo.capulong@egis-group.com',password:'Aneza654457*',remarks:''},
-    {portalDescription:'RCRC Wifi / Server',portalAddress:'',loginAccount:'capulong.l',password:'Cc123456',remarks:'P@ssw0rd - initial'},
-    {portalDescription:'Qiwa',portalAddress:'https://auth.qiwa.sa',loginAccount:'2520016409',password:'Aneza691122-',remarks:'OTP: 0542761620'},
-    {portalDescription:'TM Router',portalAddress:'',loginAccount:'capulong',password:'aneza654457',remarks:''},
-    {portalDescription:'TM WiFi 2.4G',portalAddress:'',loginAccount:'capulong',password:'aneza654457',remarks:'New Code 2022'},
-    {portalDescription:'TM WiFi 5G',portalAddress:'',loginAccount:'capulong-5g',password:'aneza654457',remarks:'Reward: 6364020023376620'},
-    {portalDescription:'UniFi Malaysia',portalAddress:'https://unifi.com.my/',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:'Acct: 1037187430'},
-    {portalDescription:'IWK Seremban',portalAddress:'https://www.iwk.com.my/customer/ebill',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Acct: 97435663'},
-    {portalDescription:'SAINS Water',portalAddress:'https://www.sainswater.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Acct: 050-0043179-0316'},
-    {portalDescription:'MySejahtera',portalAddress:'https://mysejahtera.malaysia.gov.my/',loginAccount:'9660542761620',password:'aneza654457',remarks:''},
-    {portalDescription:'eKonsular Malaysia',portalAddress:'https://ekonsular.kln.gov.my/',loginAccount:'691122105616',password:'Aneza654457*',remarks:'polcapulong@yahoo.com'},
-    {portalDescription:'Pag-Ibig',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:''},
-    {portalDescription:'Shopee Malaysia',portalAddress:'https://shopee.com.my/',loginAccount:'polcapulong',password:'Aneza654457*',remarks:'OTP: (+60) 1116456170'},
-    {portalDescription:'LinkedIn',portalAddress:'https://www.linkedin.com/',loginAccount:'polcapulong@yahoo.com',password:'Aneza654457*',remarks:''},
-    {portalDescription:'Facebook (Leo)',portalAddress:'https://facebook.com',loginAccount:'polcapulong@yahoo.com',password:'AnezaAishaMikha*2674',remarks:'OTP: 0542761620'},
-    {portalDescription:'Facebook Business (CapulongFarms)',portalAddress:'https://facebook.com',loginAccount:'polcapulong@yahoo.com',password:'CapulongFarms654457*',remarks:'capulongfarms.org'},
-    {portalDescription:'Gmail (polcapulong1)',portalAddress:'',loginAccount:'polcapulong1@gmail.com',password:'Aneza654457*',remarks:'Outlook added 5/1/2026'},
-    {portalDescription:'Yahoo Mail',portalAddress:'',loginAccount:'polcapulong',password:'AnezaAishaMikha*68699803',remarks:'OTP: +97477940625'},
-    {portalDescription:'Netflix',portalAddress:'https://netflix.com',loginAccount:'aishamerly@yahoo.com',password:'ghazallyfamily2024',remarks:'capulongfamily compromised Aug.2024'},
-    {portalDescription:'Amazon Prime',portalAddress:'https://amazon.com',loginAccount:'neezee_ghazally@yahoo.com',password:'HoldMyHand_69',remarks:'Credit card: 03/28'},
-    {portalDescription:'STCPay',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'Nafath: 861053',remarks:''},
-    {portalDescription:'MobilyPay',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'654457',remarks:'Bank al Bilad SA4115134018960033147766'},
-    {portalDescription:'Mobily Apps',portalAddress:'',loginAccount:'polcapulong',password:'Aneza654457',remarks:'OTP: 0542761620'},
-    {portalDescription:'Smart Life (Tuya)',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'For Remote Socket; Login: 9664573065'},
-    {portalDescription:'YooSee CCTV',portalAddress:'',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:'Acct: 013434267'},
-    {portalDescription:'Solarman',portalAddress:'',loginAccount:'1535375262 / polcapulong@yahoo.com',password:'aneza654457',remarks:''},
-    {portalDescription:'PELCO 1 Philippines',portalAddress:'https://online.pelco1.org.ph/',loginAccount:'loucapulong23@gmail.com',password:'pelco_LA2020',remarks:''},
-    {portalDescription:'St. Andrews Academy Admin',portalAddress:'',loginAccount:'Admin Password',password:'aneza654457',remarks:''},
-    {portalDescription:'St. Andrews Academy Portal',portalAddress:'https://st-andrews-academy.github.io/',loginAccount:'aneza654457 (admin)',password:'',remarks:''},
-    {portalDescription:'St. Andrews Email',portalAddress:'',loginAccount:'st_andrews_academy@hotmail.com',password:'aneza654457',remarks:'Backup: polcapulong@yahoo.com'},
-    {portalDescription:'Firebase (polcapulong)',portalAddress:'https://console.firebase.google.com',loginAccount:'polcapulong@yahoo.com (Google)',password:'',remarks:''},
-    {portalDescription:'Remitly',portalAddress:'https://www.remitly.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
-    {portalDescription:'Tableau Desktop',portalAddress:'https://www.tableau.com/',loginAccount:'License: TCJF-A9F1-8570-BAFD-57A4',password:'',remarks:''},
-    {portalDescription:'Zakat2u Malaysia',portalAddress:'https://www.zakat2u.com.my/',loginAccount:'6911221056',password:'Aneza654457*',remarks:'Zakat fitrah'},
-    {portalDescription:'Remitly',portalAddress:'https://www.remitly.com/',loginAccount:'polcapulong@yahoo.com',password:'aneza654457',remarks:''},
-    {portalDescription:'MYIPTV4K (Leo)',portalAddress:'',loginAccount:'5217963912468534',password:'81260934',remarks:'Exp: 2026-06-14'},
-    {portalDescription:'eTravel Apps PH',portalAddress:'',loginAccount:'eGovPH: 654457',password:'654457',remarks:'polcapulong@yahoo.com'},
-    {portalDescription:'UAE Exchange',portalAddress:'https://qa.uaeexchange.com/',loginAccount:'polcapulong#',password:'Aneza654457#',remarks:'Reg: 0005763414420265'},
-  ];
-  const batch = window._db.batch();
-  for (const r of SEED) {
-    r.createdAt = new Date().toISOString();
-    const ref = window._db.collection(PORTAL_COL).doc();
-    const encPassword = await encryptField(r.password);
-    batch.set(ref, {...r, password: encPassword});
-    S.portalRecords.push({id: ref.id, ...r});
-  }
-  await batch.commit();
-  localStorage.setItem('portalCache', JSON.stringify(S.portalRecords));
-  toast('Portal records seeded (' + SEED.length + ' records)', 'success');
-}
-
-// ═══════════════════════════════════════════════════
-//  SEED DATA (Repository)
-// ═══════════════════════════════════════════════════
-async function seedRepo() {
-  const SEED = [
-    {repositoryTitle:'Repository Portal',repositoryDescription:'This portal — records, maintains and archives portals, emails and repositories using Firebase',localFolderDirectory:'C:/Claude/Projects/Repository',vsCodeWorkspace:'Repository.code-workspace',vsCodeGhAuth:'git@github.com:capulongfarms/repository.git',githubGoogleAcct:'polcapulong@yahoo.com',githubUsername:'capulongfarms',githubRepository:'repository',githubDomainAddress:'https://capulongfarms.github.io/repository',firebaseGoogleAcct:'polcapulong@yahoo.com',firebaseProjectAppName:'repository',firebaseProjectId:'repository-15ce3',cloudflareDomainDns:'',cloudflareDomainPages:'',railway:'',paymongo:'',remarks:'Self-referencing entry'},
-    {repositoryTitle:'St. Andrews Academy Portal',repositoryDescription:'Student alumni and school management portal with Firebase backend',localFolderDirectory:'C:/Claude/Projects/St_Andrews',vsCodeWorkspace:'St_Andrews.code-workspace',vsCodeGhAuth:'git@github.com:st-andrews-academy/st-andrews-academy.github.io.git',githubGoogleAcct:'st_andrews_academy@gmail.com',githubUsername:'st-andrews-academy',githubRepository:'st-andrews-academy.github.io',githubDomainAddress:'https://st-andrews-academy.github.io',firebaseGoogleAcct:'st_andrews_academy@gmail.com',firebaseProjectAppName:'st-andrews-academy',firebaseProjectId:'st-andrews-academy',cloudflareDomainDns:'',cloudflareDomainPages:'',railway:'',paymongo:'',remarks:'Alumni DB portal'},
-    {repositoryTitle:'CapulongFarms Main Site',repositoryDescription:'Main Capulong Farms website with public pages',localFolderDirectory:'C:/Claude/Projects/CapulongFarms',vsCodeWorkspace:'CapulongFarms.code-workspace',vsCodeGhAuth:'git@github.com:capulongfarms/capulongfarms.github.io.git',githubGoogleAcct:'polcapulong@yahoo.com',githubUsername:'capulongfarms',githubRepository:'capulongfarms.github.io',githubDomainAddress:'https://capulongfarms.org',firebaseGoogleAcct:'polcapulong@yahoo.com',firebaseProjectAppName:'capulongfarms',firebaseProjectId:'capulongfarms',cloudflareDomainDns:'capulongfarms.org',cloudflareDomainPages:'capulongfarms.pages.dev',railway:'https://railway.com/project/7b2f6b63-612a-4d4c-8eab-1040494ec8c6',paymongo:'',remarks:'Main farming portal'},
-    {repositoryTitle:'CapulongFarms Halal',repositoryDescription:'Halal product sub-portal',localFolderDirectory:'C:/Claude/Projects/CapulongFarms-Halal',vsCodeWorkspace:'',vsCodeGhAuth:'',githubGoogleAcct:'polcapulong@yahoo.com',githubUsername:'capulongfarms',githubRepository:'halal',githubDomainAddress:'https://halal.capulongfarms.org',firebaseGoogleAcct:'polcapulong@yahoo.com',firebaseProjectAppName:'',firebaseProjectId:'',cloudflareDomainDns:'halal.capulongfarms.org',cloudflareDomainPages:'',railway:'',paymongo:'',remarks:''},
-    {repositoryTitle:'Agricultural Market Vendors',repositoryDescription:'Local vendors database for agricultural market',localFolderDirectory:'C:/Claude/Projects/Agricultural_Market',vsCodeWorkspace:'',vsCodeGhAuth:'',githubGoogleAcct:'polcapulong@yahoo.com',githubUsername:'capulongfarms',githubRepository:'agricultural-market',githubDomainAddress:'',firebaseGoogleAcct:'polcapulong@yahoo.com',firebaseProjectAppName:'',firebaseProjectId:'',cloudflareDomainDns:'',cloudflareDomainPages:'',railway:'',paymongo:'PayMongo Philippines',remarks:'file:///C:/Claude/Projects/Agricultural_Market/Vendors.html'},
-  ];
-  const batch = window._db.batch();
-  SEED.forEach(r => {
-    r.createdAt = new Date().toISOString();
-    const ref = window._db.collection(REPO_COL).doc();
-    batch.set(ref, r);
-    S.repoRecords.push({id: ref.id, ...r});
-  });
-  await batch.commit();
-  localStorage.setItem('repoCache', JSON.stringify(S.repoRecords));
-  toast('Repository records seeded', 'success');
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  } catch(e) { return iso; }
 }
 
 // ═══════════════════════════════════════════════════
