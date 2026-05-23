@@ -323,10 +323,10 @@ main{flex:1;overflow:hidden;}
         <div class="toolbar">
           <div class="search-box">🔍<input type="text" id="portal-search" placeholder="Search…" oninput="renderPortalTable()"/></div>
           <button class="btn btn-primary" onclick="openPortalModal()">+ Add</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(backupPortal)">⬇ Backup</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(restorePortal)">⬆ Restore</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(exportPortal)">📤 Export</button>
-          <button class="btn btn-ghost" onclick="importPortal()">📥 Import</button>
+          <button class="btn btn-ghost" onclick="pinProtect(backupPortal)">⬇ Backup</button>
+          <button class="btn btn-ghost" onclick="pinProtect(restorePortal)">⬆ Restore</button>
+          <button class="btn btn-ghost" onclick="pinProtect(exportPortal)">📤 Export</button>
+          <button class="btn btn-ghost" onclick="pinProtect(importPortal)">📥 Import</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -351,10 +351,10 @@ main{flex:1;overflow:hidden;}
         <div class="toolbar">
           <div class="search-box">🔍<input type="text" id="repo-search" placeholder="Search…" oninput="renderRepoList()"/></div>
           <button class="btn btn-primary" onclick="newRepoRecord()">+ Add</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(backupRepo)">⬇ Backup</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(restoreRepo)">⬆ Restore</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(exportRepo)">📤 Export</button>
-          <button class="btn btn-ghost" onclick="importRepo()">📥 Import</button>
+          <button class="btn btn-ghost" onclick="pinProtect(backupRepo)">⬇ Backup</button>
+          <button class="btn btn-ghost" onclick="pinProtect(restoreRepo)">⬆ Restore</button>
+          <button class="btn btn-ghost" onclick="pinProtect(exportRepo)">📤 Export</button>
+          <button class="btn btn-ghost" onclick="pinProtect(importRepo)">📥 Import</button>
         </div>
       </div>
       <div class="split-layout">
@@ -399,21 +399,21 @@ main{flex:1;overflow:hidden;}
       <div class="settings-section">
         <h3>🌐 Portal Database</h3>
         <div class="btn-group">
-          <button class="btn btn-ghost" onclick="requireAdmin(backupPortal)">⬇ Backup</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(restorePortal)">⬆ Restore</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(exportPortal)">📤 Export Excel</button>
-          <button class="btn btn-ghost" onclick="importPortal()">📥 Import Excel</button>
-          <button class="btn btn-danger" onclick="requireAdmin(clearPortal)">🗑 Clear All</button>
+          <button class="btn btn-ghost" onclick="pinProtect(backupPortal)">⬇ Backup</button>
+          <button class="btn btn-ghost" onclick="pinProtect(restorePortal)">⬆ Restore</button>
+          <button class="btn btn-ghost" onclick="pinProtect(exportPortal)">📤 Export Excel</button>
+          <button class="btn btn-ghost" onclick="pinProtect(importPortal)">📥 Import Excel</button>
+          <button class="btn btn-danger" onclick="pinProtect(clearPortal)">🗑 Clear All</button>
         </div>
       </div>
       <div class="settings-section">
         <h3>📦 Repository Database</h3>
         <div class="btn-group">
-          <button class="btn btn-ghost" onclick="requireAdmin(backupRepo)">⬇ Backup</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(restoreRepo)">⬆ Restore</button>
-          <button class="btn btn-ghost" onclick="requireAdmin(exportRepo)">📤 Export Excel</button>
-          <button class="btn btn-ghost" onclick="importRepo()">📥 Import Excel</button>
-          <button class="btn btn-danger" onclick="requireAdmin(clearRepo)">🗑 Clear All</button>
+          <button class="btn btn-ghost" onclick="pinProtect(backupRepo)">⬇ Backup</button>
+          <button class="btn btn-ghost" onclick="pinProtect(restoreRepo)">⬆ Restore</button>
+          <button class="btn btn-ghost" onclick="pinProtect(exportRepo)">📤 Export Excel</button>
+          <button class="btn btn-ghost" onclick="pinProtect(importRepo)">📥 Import Excel</button>
+          <button class="btn btn-danger" onclick="pinProtect(clearRepo)">🗑 Clear All</button>
         </div>
       </div>
       <div class="settings-section">
@@ -1224,6 +1224,14 @@ async function changeAdminPassword() {
 // ═══════════════════════════════════════════════════
 function requireAdmin(cb) {
   if (S.adminSession) { cb(); return; }
+  S.adminCb = cb;
+  document.getElementById('admin-pw').value = '';
+  document.getElementById('admin-msg').textContent = '';
+  openModal('admin-modal');
+  setTimeout(()=>document.getElementById('admin-pw').focus(), 100);
+}
+
+function pinProtect(cb) {
   S.adminCb = cb;
   document.getElementById('admin-pw').value = '';
   document.getElementById('admin-msg').textContent = '';
