@@ -403,6 +403,7 @@ main{flex:1;overflow:hidden;}
           <button class="btn btn-ghost" onclick="requireAdmin(restorePortal)">⬆ Restore</button>
           <button class="btn btn-ghost" onclick="requireAdmin(exportPortal)">📤 Export Excel</button>
           <button class="btn btn-ghost" onclick="importPortal()">📥 Import Excel</button>
+          <button class="btn btn-danger" onclick="requireAdmin(clearPortal)">🗑 Clear All</button>
         </div>
       </div>
       <div class="settings-section">
@@ -412,6 +413,7 @@ main{flex:1;overflow:hidden;}
           <button class="btn btn-ghost" onclick="requireAdmin(restoreRepo)">⬆ Restore</button>
           <button class="btn btn-ghost" onclick="requireAdmin(exportRepo)">📤 Export Excel</button>
           <button class="btn btn-ghost" onclick="importRepo()">📥 Import Excel</button>
+          <button class="btn btn-danger" onclick="requireAdmin(clearRepo)">🗑 Clear All</button>
         </div>
       </div>
       <div class="settings-section">
@@ -1124,6 +1126,51 @@ async function handleRepoImport(inp) {
     inp.value = ''; showLoading(false);
   };
   reader.readAsArrayBuffer(file);
+}
+
+async function clearPortal() {
+  confirmDo('CLEAR ALL portal records from Firebase? This permanently deletes every entry and cannot be undone.', async () => {
+    showLoading(true, 'Clearing Portal DB…');
+    try {
+      const snap = await window._db.collection(PORTAL_COL).get();
+      const chunks = [];
+      for (let i = 0; i < snap.docs.length; i += 500)
+        chunks.push(snap.docs.slice(i, i + 500));
+      for (const chunk of chunks) {
+        const batch = window._db.batch();
+        chunk.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+      S.portalRecords = [];
+      localStorage.removeItem('portalCache');
+      renderPortalTable(); renderOverview();
+      toast('Portal DB cleared (' + snap.docs.length + ' records deleted)', 'success');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+    showLoading(false);
+  });
+}
+
+async function clearRepo() {
+  confirmDo('CLEAR ALL repository records from Firebase? This permanently deletes every entry and cannot be undone.', async () => {
+    showLoading(true, 'Clearing Repository DB…');
+    try {
+      const snap = await window._db.collection(REPO_COL).get();
+      const chunks = [];
+      for (let i = 0; i < snap.docs.length; i += 500)
+        chunks.push(snap.docs.slice(i, i + 500));
+      for (const chunk of chunks) {
+        const batch = window._db.batch();
+        chunk.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+      S.repoRecords = [];
+      S.selectedRepoId = null;
+      localStorage.removeItem('repoCache');
+      renderRepoList(); renderRepoPanel(); renderOverview();
+      toast('Repository DB cleared (' + snap.docs.length + ' records deleted)', 'success');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+    showLoading(false);
+  });
 }
 
 async function backupSettings() {
