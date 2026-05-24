@@ -369,7 +369,7 @@ main{flex:1;overflow:hidden;}
           <div class="split-right-header">
             <span id="repo-panel-title" style="font-size:.88rem;font-weight:600;">Select a repository</span>
             <div class="toolbar" id="repo-panel-actions" style="display:none;">
-              <button class="btn btn-primary btn-sm" id="repo-edit-btn" onclick="requireAdmin(startRepoEdit)">✏️ Edit Datafields</button>
+              <button class="btn btn-primary btn-sm" id="repo-edit-btn" onclick="startRepoEdit()">✏️ Edit Datafields</button>
               <button class="btn btn-success btn-sm" id="repo-save-btn" style="display:none;" onclick="saveRepoEdit()">💾 Save</button>
               <button class="btn btn-ghost btn-sm" id="repo-cancel-btn" style="display:none;" onclick="cancelRepoEdit()">✕ Cancel</button>
             </div>
@@ -874,7 +874,7 @@ function renderPortalTable() {
       <td style="font-family:var(--mono);font-size:.78rem;">${esc(r.password||'—')}</td>
       <td style="font-size:.74rem;color:var(--text2);">${esc(trunc(r.remarks||'',45))}</td>
       <td><div style="display:flex;gap:4px;">
-        <button class="btn btn-ghost btn-sm" onclick='requireAdmin(() => openPortalModal(JSON.parse(decodeURIComponent("${safeR}"))))'>✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick='openPortalModal(JSON.parse(decodeURIComponent("${safeR}")))'>✏️</button>
         <button class="btn btn-danger btn-sm" onclick="requireAdmin(()=>deletePortalRecord('${r.id}'))">🗑</button>
       </div></td>
     </tr>`;
@@ -928,7 +928,7 @@ function renderRepoList() {
       <div class="ri-title">${esc(r.repositoryTitle||'Untitled')}</div>
       <div class="ri-desc">${esc(r.repositoryDescription||'No description')}</div>
       <div class="ri-actions">
-        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();selectRepo('${r.id}');requireAdmin(startRepoEdit)">✏️ Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();selectRepo('${r.id}');startRepoEdit()">✏️ Edit</button>
         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();requireAdmin(()=>deleteRepoRecord('${r.id}'))">🗑 Del</button>
       </div>
     </div>`).join('');
