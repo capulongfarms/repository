@@ -29,7 +29,7 @@ Open `index.html` directly in a browser — `file://` protocol works. No server 
 - `loadPortal()` decrypts all passwords after fetching from Firestore — in-memory records are always plaintext.
 - On sign-out, `S.cryptoKey` is cleared.
 
-**PIN protection:** `pinProtect(cb)` always re-prompts for the admin password regardless of session state. Used for Backup, Restore, Export, Import, Clear All, and Clear Backups. `requireAdmin(cb)` only prompts when `S.adminSession` is false — used on Edit and Delete buttons for both Portal and Repository records. Add (Portal and Repo) requires no auth — no gate on button press or save. Auth for Edit is gated on the Edit button press only; `savePortalRecord`, `saveRepoEdit`, and `newRepoRecord` carry no session guards.
+**PIN protection:** `pinProtect(cb)` always re-prompts for the admin password regardless of session state. Used for Backup, Restore, Export, Import, Clear All, and Clear Backups. Add and Edit (Portal and Repo) require no auth — no PIN on button press or save. Delete buttons use `requireAdmin(cb)`, which prompts only when `S.adminSession` is false. `savePortalRecord`, `saveRepoEdit`, and `newRepoRecord` carry no session guards.
 
 **Encryption migration:** `migrateEncryption()` re-encrypts all portal passwords when the admin password changes. Decrypts with the old key, re-encrypts with the new key, updates the password hash, and refreshes `S.cryptoKey` — all in one operation. Handles collections of any size via 500-doc batch chunks.
 
