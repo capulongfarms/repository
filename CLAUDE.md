@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A single-file web app (`index.html`, ~1450 lines) for managing portal credentials and software repository metadata. All logic, styles, and markup live in one file with no build step. Firebase Firestore is the primary datastore; localStorage is the offline fallback. Deployed on GitHub Pages at `https://capulongfarms.github.io/repository/`.
+A single-file web app (`index.html`, ~1470 lines) for managing portal credentials and software repository metadata. All logic, styles, and markup live in one file with no build step. Firebase Firestore is the primary datastore; localStorage is the offline fallback. Deployed on GitHub Pages at `https://capulongfarms.github.io/repository/`.
 
 ## Running the App
 
